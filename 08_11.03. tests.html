@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber.SoHo | Study Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 3D Flip Card Utilities */
+        .perspective-1000 { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .transition-transform-500 { transition: transform 0.5s; }
+        
+        /* Custom Scrollbar for a cleaner look */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f5f5f4; }
+        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-40">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">📚 Study Center</h1>
+                <p class="text-sm text-slate-500">Detect and Analyze Anomalies</p>
+            </div>
+            <nav class="mt-4 md:mt-0 flex space-x-2">
+                <button onclick="switchTab('flashcards')" id="tab-btn-flashcards" class="px-5 py-2 text-sm font-bold rounded-lg bg-teal-600 text-white shadow-sm transition-colors">
+                    🗂️ Flashcards (25)
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="px-5 py-2 text-sm font-bold rounded-lg bg-stone-200 text-slate-600 hover:bg-stone-300 transition-colors">
+                    📝 Practice Quiz (10)
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl mx-auto px-4 py-8 w-full">
+        
+        <section id="tab-flashcards" class="block">
+            <div class="mb-6 text-center">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Concept Mastery</h2>
+                <p class="text-slate-500">Click any card to reveal its definition. Review these core concepts before attempting the quiz.</p>
+            </div>
+            <div id="flashcards-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                </div>
+        </section>
+
+        <section id="tab-quiz" class="hidden">
+            <div class="mb-6 text-center border-b border-stone-200 pb-6">
+                <h2 class="text-2xl font-bold text-slate-800 mb-2">Practical Application Quiz</h2>
+                <p class="text-slate-500">Test your methodological reasoning and analysis skills. Select an answer to view the rationale.</p>
+            </div>
+            <div id="quiz-container" class="space-y-8 max-w-3xl mx-auto">
+                </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- DATA STRUCTURES ---
+
+        const flashcardsData = [
+            { front: "Definition of an anomaly in monitoring", back: "A deviation from the expected that has been actively measured, rather than assumed." },
+            { front: "Primary metric used for time-of-day baseline alerting", back: "The 95th percentile (p95) for a specific hour of the day." },
+            { front: "Purpose of NTP synchronization in tool hygiene", back: "To align clocks across systems, which is mandatory for accurate log correlation." },
+            { front: "Reason for monitoring disk free space on security sensors", back: "A full disk silently rotates evidence, which mimics an attacker covering their tracks." },
+            { front: "Function of a canary alert", back: "A test event sent daily to ensure the entire detection pipeline is working end-to-end." },
+            { front: "Scope of a Network Intrusion Detection System (NIDS)", back: "Identifying patterns on the wire, such as known bad traffic flows." },
+            { front: "Tool family best suited for slow trends and multi-source correlation", back: "Security Information and Event Management (SIEM)." },
+            { front: "The Three Lanes of methodical analysis", back: "Traffic, Files, and Event Logs." },
+            { front: "Significance of three lanes agreeing on the same indicator", back: "It confirms the activity as an incident, rather than just a hunch (1 lane) or an investigation (2 lanes)." },
+            { front: "First step of the five-step traffic loop", back: "Conversation map, which identifies who is talking to whom." },
+            { front: "Meaning of the M-A-C-B model in NTFS file analysis", back: "Modified, Accessed, Changed, Born (file creation and metadata timestamps)." },
+            { front: "Red flag associated with NTFS M-A-C-B timestamps", back: "All four timestamps matching within approximately one second, indicating a classic dropper-landing signature." },
+            { front: "Meaning of Windows Event ID 1102", back: "Audit log cleared; this is almost always malicious and requires freezing the host." },
+            { front: "Indicator of a password spray attack in event logs", back: "More than 10 Logon Failure events (Event ID 4625) within a minute." },
+            { front: "TargetImage associated with credential dumping in Sysmon Event ID 10", back: "lsass.exe" },
+            { front: "Apex of the Pyramid of Pain", back: "TTPs (Tactics, Techniques, Procedures), which are very painful for an attacker to change." },
+            { front: "Base layer of the Pyramid of Pain", back: "Hash values, which are trivial for an attacker to change (one byte flip creates a new hash)." },
+            { front: "Meaning of the 'UH' in the HE-UH-C discipline", back: "Un-evidence; asking what artifacts would prove the theory or observation wrong." },
+            { front: "Benefit of the HE-UH-C worksheet", back: "It forces the analyst to check for falsifiability and protects against confirmation bias." },
+            { front: "NIST definition of an Incident", back: "An adverse event accompanied by a suspected or confirmed violation of Confidentiality, Integrity, or Availability (CIA)." },
+            { front: "NIST definition of a Breach", back: "A confirmed CIA violation that often includes regulatory notification triggers." },
+            { front: "The Three Confirmation Gates before declaring an incident", back: "Reproducibility, Persistence, and Plausibility." },
+            { front: "Most-skipped confirmation gate in incident analysis", back: "Plausibility, typically because analysts fail to actively try to disprove a benign explanation." },
+            { front: "Core rule for the 'What happened' field in a one-page incident summary", back: "It must be constrained to exactly one sentence of observable facts." },
+            { front: "Requirement for the 'Next Action' field in an incident summary", back: "It must specify a named human owner and a specific clock time deadline." }
+        ];
+
+        const quizData = [
+            {
+                q: "At 03:00, an analyst notices a spike of 85 DNS queries per minute from a specific host. To determine if this is a true anomaly rather than just noise, what is the most methodologically sound baseline metric to check against?",
+                options: [
+                    { text: "The 50th percentile (p50) of DNS queries for the entire week.", rationale: "The median (p50) establishes the middle ground, but it does not account for expected upper limits or specific hours.", isCorrect: false },
+                    { text: "The 95th percentile (p95) of DNS queries specifically for the 03:00 hour.", rationale: "An anomaly is a measured deviation from the expected; checking the 95th percentile specifically for that hour accounts for normal time-of-day fluctuations.", isCorrect: true },
+                    { text: "The daily average of DNS queries across all hosts in the network.", rationale: "A network-wide daily average is too broad and obscures host-specific or time-specific patterns.", isCorrect: false },
+                    { text: "The maximum number of DNS queries ever recorded for that host.", rationale: "The historical maximum might include past anomalies or outliers and is not a reliable baseline.", isCorrect: false }
+                ]
+            },
+            {
+                q: "An alert fires indicating a user clicked a malicious link. You need to determine exactly which child processes were spawned by the web browser on the user's laptop. Which monitoring tool family is the correct choice for this specific question?",
+                options: [
+                    { text: "Network Intrusion Detection System (NIDS)", rationale: "NIDS looks for patterns on the wire, not process executions on a local host.", isCorrect: false },
+                    { text: "Packet Capture", rationale: "Packet capture records bytes on the wire, which won't show the resulting process execution on the OS.", isCorrect: false },
+                    { text: "Endpoint Detection and Response (EDR)", rationale: "EDR is specifically scoped for monitoring processes, files, and host-level activity.", isCorrect: true },
+                    { text: "Security Information and Event Management (SIEM)", rationale: "Relying on SIEM to dig into specific process trees is often less efficient than going directly to the EDR platform.", isCorrect: false }
+                ]
+            },
+            {
+                q: "During triage, you find a malicious payload delivered over the network (Lane 1) and identify the corresponding file dropped on the disk (Lane 2). However, you have not yet found any event logs (Lane 3) confirming execution. According to the Three Lanes Principle, what is your next action?",
+                options: [
+                    { text: "Declare an incident immediately since two lanes are highly suspicious.", rationale: "Declaring an incident requires all three lanes to agree.", isCorrect: false },
+                    { text: "Open an investigation based on the agreement of two lanes.", rationale: "Two lanes converging provide enough confidence to formally investigate, but not to declare an incident.", isCorrect: true },
+                    { text: "Keep collecting data as a curiosity since logs are missing.", rationale: "Treating this as a curiosity underplays the risk; two lanes demand an investigation.", isCorrect: false },
+                    { text: "Freeze the host to prevent the file from executing.", rationale: "Standard procedure dictates opening an investigation before initiating drastic containment without log corroboration.", isCorrect: false }
+                ]
+            },
+            {
+                q: "You are examining the NTFS $STANDARD_INFORMATION metadata of a suspicious executable. Which timestamp pattern strongly suggests it is a dropper payload rather than a legitimately installed application?",
+                options: [
+                    { text: "The 'Modified' timestamp is significantly older than the 'Born' timestamp.", rationale: "This is a normal occurrence for downloaded or copied files.", isCorrect: false },
+                    { text: "The 'Accessed' timestamp is missing entirely.", rationale: "Modern Windows often disables strict Access timestamp updates for performance reasons.", isCorrect: false },
+                    { text: "All four M-A-C-B timestamps match within approximately one second.", rationale: "When malware rapidly creates, writes, and modifies a file programmatically, it results in all four timestamps aligning almost perfectly.", isCorrect: true },
+                    { text: "The 'Changed' timestamp occurs hours after the 'Modified' timestamp.", rationale: "This simply means metadata was altered later, not inherently indicative of a dropper.", isCorrect: false }
+                ]
+            },
+            {
+                q: "While reviewing Windows Event Logs, you spot Event ID 1102. How should you interpret this observation and what is the immediate prescribed action?",
+                options: [
+                    { text: "It signifies a successful RDP logon; monitor for lateral movement.", rationale: "Logon success is tracked by Event ID 4624.", isCorrect: false },
+                    { text: "It signifies an audit log was cleared; freeze the host immediately.", rationale: "Event ID 1102 means the audit log was cleared, an action almost exclusively taken by attackers covering tracks.", isCorrect: true },
+                    { text: "It indicates credential dumping via lsass.exe; escalate to IR.", rationale: "Credential dumping is typically identified using Sysmon Event ID 10.", isCorrect: false },
+                    { text: "It represents a process creation event from an Office application; check the command line.", rationale: "Process creation is logged under Windows Event ID 4688 or Sysmon 1.", isCorrect: false }
+                ]
+            },
+            {
+                q: "A junior analyst suggests spending the week writing detection rules for a list of 1,000 newly discovered malware SHA-256 hashes. According to the Pyramid of Pain, why should you advise against this?",
+                options: [
+                    { text: "Hashes are at the top of the pyramid and take too much computing power to analyze.", rationale: "Hashes are at the bottom of the pyramid and are computationally cheap.", isCorrect: false },
+                    { text: "Hash values are trivial for an attacker to change, meaning the detection budget spent on them ages out in hours.", rationale: "Because a single byte change creates a new hash, detecting hashes causes attackers zero pain.", isCorrect: true },
+                    { text: "Host artifacts provide less context than network artifacts.", rationale: "This does not address the specific issue of hash fragility.", isCorrect: false },
+                    { text: "Writing rules for hashes violates the 80/20 rule of Detection-as-Code.", rationale: "The 80/20 rule refers to focusing on techniques, not the nature of hashes themselves.", isCorrect: false }
+                ]
+            },
+            {
+                q: "An analyst correctly logs what happened and lists the supporting evidence. However, they intentionally skip the 'UH' (Un-evidence) column in the HE-UH-C worksheet to save time. What analytical failure mode are they inviting?",
+                options: [
+                    { text: "Dwell time expansion.", rationale: "Skipping steps might speed up a flawed conclusion, leading to noise rather than dwell time.", isCorrect: false },
+                    { text: "Confirmation bias.", rationale: "The 'Un-evidence' column forces the analyst to check for falsifiability; skipping it means looking only for data that proves them right.", isCorrect: true },
+                    { text: "Escalation theatre.", rationale: "Escalation theatre is related to overusing the term 'incident'.", isCorrect: false },
+                    { text: "Loss of lane agreement.", rationale: "Lane agreement is a data gathering principle; UH is a cognitive check.", isCorrect: false }
+                ]
+            },
+            {
+                q: "A misconfigured internal script accidentally deletes a critical database table, causing a two-hour outage for the sales department. There is no evidence of a malicious actor or a breach of confidentiality. Using the NIST SP 800-61r2 terminology funnel, how must this be classified?",
+                options: [
+                    { text: "An Event", rationale: "Because this had a negative consequence, it must be escalated further up the funnel than just an event.", isCorrect: false },
+                    { text: "An Adverse Event", rationale: "It is an event with a negative consequence, but without a suspected CIA violation, it does not cross the threshold into an Incident.", isCorrect: true },
+                    { text: "An Incident", rationale: "An incident requires a suspected or confirmed violation of Confidentiality, Integrity, or Availability policies.", isCorrect: false },
+                    { text: "A Breach", rationale: "A breach implies a confirmed CIA violation with external notification triggers.", isCorrect: false }
+                ]
+            },
+            {
+                q: "An analyst scores an anomaly a 4/6 on the Confirmation Gates. They proved the alert is reproducible (2 pts) and persistent (2 pts), but scored 0 on the final gate. What is the missing gate, and what is the prescribed action for a 4/6 score?",
+                options: [
+                    { text: "Plausibility; Declare an incident but document the weak gate.", rationale: "A score of 4/6 is not high enough to declare an incident.", isCorrect: false },
+                    { text: "Plausibility; Investigate further and target the weakest gate next.", rationale: "The missing gate is Plausibility. A score of 3-4 requires further investigation.", isCorrect: true },
+                    { text: "Probability; Stay in monitoring and do not waste IR time.", rationale: "The gate is named Plausibility, and a score of 4 warrants investigation, not passive monitoring.", isCorrect: false },
+                    { text: "Plausibility; Stay in monitoring and do not waste IR time.", rationale: "Returning to passive monitoring is only prescribed for scores of 2 or less.", isCorrect: false }
+                ]
+            },
+            {
+                q: "You are completing a One-Page Incident Summary for the shift handover. Which of the following entries correctly follows the discipline rules for the 'Next action' field?",
+                options: [
+                    { text: "The SOC Level 2 team needs to isolate the affected host ASAP.", rationale: "This uses a generic group and a vague timeline.", isCorrect: false },
+                    { text: "Someone from network engineering will block the malicious IP shortly.", rationale: "Assigning 'someone' diffuses responsibility, and 'shortly' is not a defined time.", isCorrect: false },
+                    { text: "Ensure the malicious payload is reversed engineered to understand its TTPs.", rationale: "This lists a task but assigns no owner and no deadline.", isCorrect: false },
+                    { text: "Alice Chen to isolate the host in CrowdStrike by 14:00 local time.", rationale: "This strictly follows the rule: it specifies a named human owner and a precise clock time deadline.", isCorrect: true }
+                ]
+            }
+        ];
+
+        // --- RENDERING LOGIC ---
+
+        function renderFlashcards() {
+            const container = document.getElementById('flashcards-container');
+            let html = '';
+            
+            flashcardsData.forEach((card, index) => {
+                html += `
+                <div class="h-48 w-full perspective-1000 cursor-pointer group" onclick="this.querySelector('.card-inner').classList.toggle('rotate-y-180')">
+                    <div class="card-inner relative w-full h-full transition-transform-500 transform-style-3d shadow-sm hover:shadow-md rounded-xl">
+                        
+                        <div class="absolute w-full h-full backface-hidden bg-white border border-stone-200 rounded-xl p-6 flex flex-col items-center justify-center text-center">
+                            <span class="text-xs font-bold text-teal-600 mb-2 uppercase tracking-wider block w-full text-left absolute top-4 left-4">Card ${index + 1}</span>
+                            <h3 class="text-lg font-bold text-slate-800">${card.front}</h3>
+                            <p class="text-xs text-slate-400 mt-4 absolute bottom-4">Click to flip ⤵</p>
+                        </div>
+
+                        <div class="absolute w-full h-full backface-hidden bg-teal-50 border border-teal-200 rounded-xl p-6 flex flex-col items-center justify-center text-center rotate-y-180">
+                            <p class="text-base font-medium text-teal-900">${card.back}</p>
+                        </div>
+                        
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            let html = '';
+
+            quizData.forEach((item, qIndex) => {
+                // Shuffle options for display
+                const shuffledOptions = [...item.options].sort(() => Math.random() - 0.5);
+                
+                let optionsHtml = '';
+                shuffledOptions.forEach((opt, oIndex) => {
+                    // Escape single quotes for inline JS
+                    const safeRationale = opt.rationale.replace(/'/g, "\\'");
+                    
+                    optionsHtml += `
+                        <button onclick="handleAnswer(this, ${opt.isCorrect}, '${safeRationale}')" 
+                                class="w-full text-left p-4 border border-stone-200 rounded-lg hover:bg-stone-100 transition-colors relative quiz-option">
+                            <span class="block pr-6">${opt.text}</span>
+                            <span class="icon-indicator absolute right-4 top-4 hidden text-xl"></span>
+                        </button>
+                    `;
+                });
+
+                html += `
+                <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm quiz-question-block">
+                    <div class="flex gap-4 mb-4">
+                        <div class="bg-slate-800 text-white font-bold h-8 w-8 rounded-full flex items-center justify-center shrink-0">
+                            ${qIndex + 1}
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 pt-1">${item.q}</h3>
+                    </div>
+                    <div class="space-y-3 pl-12 options-container">
+                        ${optionsHtml}
+                    </div>
+                    <div class="rationale-box hidden mt-4 ml-12 p-4 rounded-lg text-sm font-medium"></div>
+                </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // --- INTERACTION LOGIC ---
+
+        function switchTab(tab) {
+            const flashcardsTab = document.getElementById('tab-flashcards');
+            const quizTab = document.getElementById('tab-quiz');
+            const btnFlashcards = document.getElementById('tab-btn-flashcards');
+            const btnQuiz = document.getElementById('tab-btn-quiz');
+
+            if (tab === 'flashcards') {
+                flashcardsTab.classList.remove('hidden');
+                quizTab.classList.add('hidden');
+                
+                btnFlashcards.className = 'px-5 py-2 text-sm font-bold rounded-lg bg-teal-600 text-white shadow-sm transition-colors';
+                btnQuiz.className = 'px-5 py-2 text-sm font-bold rounded-lg bg-stone-200 text-slate-600 hover:bg-stone-300 transition-colors';
+            } else {
+                quizTab.classList.remove('hidden');
+                flashcardsTab.classList.add('hidden');
+                
+                btnQuiz.className = 'px-5 py-2 text-sm font-bold rounded-lg bg-teal-600 text-white shadow-sm transition-colors';
+                btnFlashcards.className = 'px-5 py-2 text-sm font-bold rounded-lg bg-stone-200 text-slate-600 hover:bg-stone-300 transition-colors';
+            }
+        }
+
+        function handleAnswer(btn, isCorrect, rationale) {
+            const container = btn.closest('.quiz-question-block');
+            const options = container.querySelectorAll('.quiz-option');
+            const rationaleBox = container.querySelector('.rationale-box');
+            
+            // Disable all options in this question
+            options.forEach(opt => {
+                opt.disabled = true;
+                opt.classList.remove('hover:bg-stone-100', 'cursor-pointer');
+                opt.classList.add('opacity-50', 'cursor-not-allowed');
+            });
+
+            // Highlight chosen answer
+            btn.classList.remove('opacity-50');
+            const icon = btn.querySelector('.icon-indicator');
+            icon.classList.remove('hidden');
+
+            if (isCorrect) {
+                btn.classList.add('bg-teal-50', 'border-teal-400', 'text-teal-900');
+                icon.innerHTML = '✅';
+                rationaleBox.className = 'rationale-box mt-4 ml-12 p-4 rounded-lg text-sm font-medium bg-teal-100 text-teal-800 border border-teal-200 block';
+            } else {
+                btn.classList.add('bg-rose-50', 'border-rose-400', 'text-rose-900');
+                icon.innerHTML = '❌';
+                rationaleBox.className = 'rationale-box mt-4 ml-12 p-4 rounded-lg text-sm font-medium bg-rose-100 text-rose-800 border border-rose-200 block';
+            }
+
+            rationaleBox.innerHTML = `<strong>Rationale:</strong> ${rationale}`;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFlashcards();
+            renderQuiz();
+        });
+    </script>
+</body>
+</html>
+
+
+

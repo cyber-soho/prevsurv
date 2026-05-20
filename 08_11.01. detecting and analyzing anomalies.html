@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber.SoHo | Analyst's Workbench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .hidden-section {
+            display: none;
+        }
+        .fade-in {
+            animation: fadeIn 0.4s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .pyramid-layer {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .pyramid-layer:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+        .nav-btn.active {
+            border-bottom: 4px solid #0f766e;
+            color: #0f766e;
+            font-weight: 600;
+        }
+        .lane-btn.active {
+            background-color: #0f766e;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+<!-- Chosen Palette: Warm Neutral & Teal Accent (bg-stone-50, text-slate-800, teal-700/600 for primary actions, amber-600 for warnings) -->
+<!-- Application Structure Plan: The SPA is structured as an interactive "Analyst Workbench" dashboard divided into four chronological phases corresponding to the course days: 1. Collection (Tools/Baselines), 2. Triage (3 Lanes), 3. Evaluation (Pyramid/HE-UH-C), 4. Escalation (NIST/Gates). This linear but freely navigable structure mimics a real-world incident response workflow, allowing users to explore theoretical concepts through practical, task-oriented interfaces rather than reading a flat slide deck. -->
+<!-- Visualization & Content Choices: 
+1. Baseline Concept -> Goal: Inform/Change -> Method: Chart.js Line Chart -> Interaction: Hover for tooltips -> Justification: Visually demonstrates why a spike at 2 AM is an anomaly but normal at 9 AM. 
+2. Three Lanes -> Goal: Organize/Inform -> Method: CSS Grid Tabs -> Interaction: Click to swap content -> Justification: Forces the user to compartmentalize Traffic, Files, and Logs as distinct but complementary evidence sources. 
+3. Pyramid of Pain -> Goal: Organize/Relationships -> Method: Interactive CSS stacked divs -> Interaction: Hover/Click to reveal details -> Justification: Emphasizes the hierarchy of attacker pain in a highly visual, memorable format without using SVG. 
+4. NIST Funnel -> Goal: Compare -> Method: Chart.js Horizontal Bar -> Interaction: Hover -> Justification: Clearly shows the drastic reduction in volume from "Events" to "Breaches". All libraries and methods comply with NO SVG/Mermaid constraints. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">🛡️ Analyst's Workbench</h1>
+                <p class="text-sm text-slate-500">Cyber.SoHo CYB-01 · Course 420-D01-AB</p>
+            </div>
+            <nav class="mt-4 md:mt-0 flex space-x-1 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                <button onclick="navTo('sec-collection')" id="nav-sec-collection" class="nav-btn active px-4 py-2 text-sm text-slate-600 hover:text-teal-700 whitespace-nowrap transition-colors">1. Collection</button>
+                <button onclick="navTo('sec-triage')" id="nav-sec-triage" class="nav-btn px-4 py-2 text-sm text-slate-600 hover:text-teal-700 whitespace-nowrap transition-colors">2. Triage</button>
+                <button onclick="navTo('sec-evaluation')" id="nav-sec-evaluation" class="nav-btn px-4 py-2 text-sm text-slate-600 hover:text-teal-700 whitespace-nowrap transition-colors">3. Evaluation</button>
+                <button onclick="navTo('sec-escalation')" id="nav-sec-escalation" class="nav-btn px-4 py-2 text-sm text-slate-600 hover:text-teal-700 whitespace-nowrap transition-colors">4. Escalation</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-6xl mx-auto px-4 py-8 w-full">
+
+        <section id="sec-collection" class="fade-in block">
+            <div class="mb-8 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">Proper Use of Monitoring Tools</h2>
+                <p class="text-lg text-slate-600 mb-4">Welcome to the Collection phase. A monitoring tool used improperly is worse than no tool at all—it provides false confidence and silent blind spots. This section covers the five core tool families and the critical importance of establishing mathematical baselines before chasing anomalies.</p>
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+                    <p class="font-semibold text-amber-800">Rule of Thumb: Measure normal before you chase abnormal. An anomaly is simply a deviation from the expected.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <div class="col-span-1 lg:col-span-1 bg-white rounded-xl shadow-sm border border-stone-200 p-6 flex flex-col h-full">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2">Tool Families</h3>
+                    <p class="text-sm text-slate-500 mb-4">Select a family to view its scope and common examples.</p>
+                    <div class="flex flex-col space-y-2 flex-grow">
+                        <button onclick="showTool('pcap')" class="text-left px-4 py-3 bg-stone-50 hover:bg-teal-50 border border-stone-200 rounded-lg transition-colors font-medium">🛜 Packet Capture</button>
+                        <button onclick="showTool('nids')" class="text-left px-4 py-3 bg-stone-50 hover:bg-teal-50 border border-stone-200 rounded-lg transition-colors font-medium">👁️ NIDS</button>
+                        <button onclick="showTool('edr')" class="text-left px-4 py-3 bg-stone-50 hover:bg-teal-50 border border-stone-200 rounded-lg transition-colors font-medium">💻 EDR</button>
+                        <button onclick="showTool('siem')" class="text-left px-4 py-3 bg-stone-50 hover:bg-teal-50 border border-stone-200 rounded-lg transition-colors font-medium">🧠 SIEM</button>
+                        <button onclick="showTool('infra')" class="text-left px-4 py-3 bg-stone-50 hover:bg-teal-50 border border-stone-200 rounded-lg transition-colors font-medium">📈 Infra Monitor</button>
+                    </div>
+                </div>
+                
+                <div class="col-span-1 lg:col-span-2 bg-slate-800 rounded-xl shadow-sm border border-slate-700 p-6 text-white min-h-[300px] flex flex-col justify-center">
+                    <div id="tool-display" class="text-center">
+                        <div class="text-5xl mb-4">🧰</div>
+                        <h4 class="text-2xl font-bold mb-2">Select a Tool Family</h4>
+                        <p class="text-slate-400">Ensure you pick the right tool for the right question.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                <h3 class="text-xl font-bold mb-4">The Baseline Principle: Time-of-Day Percentiles</h3>
+                <p class="text-slate-600 mb-6">Without a baseline, every alert is noise. A traffic spike at 09:00 is expected business operations; the exact same spike at 02:00 is highly suspicious. We use the p95 metric per hour to establish thresholds.</p>
+                <div class="chart-container">
+                    <canvas id="baselineChart"></canvas>
+                </div>
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div class="bg-stone-50 p-3 rounded border border-stone-200">
+                        <strong class="block text-slate-800">DNS Queries</strong>
+                        <span class="text-slate-500">/ min per host</span>
+                    </div>
+                    <div class="bg-stone-50 p-3 rounded border border-stone-200">
+                        <strong class="block text-slate-800">Outbound Bytes</strong>
+                        <span class="text-slate-500">/ min per host</span>
+                    </div>
+                    <div class="bg-stone-50 p-3 rounded border border-stone-200">
+                        <strong class="block text-slate-800">Failed Logins</strong>
+                        <span class="text-slate-500">/ min per account</span>
+                    </div>
+                    <div class="bg-stone-50 p-3 rounded border border-stone-200">
+                        <strong class="block text-slate-800">New Processes</strong>
+                        <span class="text-slate-500">/ day per host</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-triage" class="hidden-section fade-in">
+            <div class="mb-8 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">Methodical Analysis: The Three Lanes</h2>
+                <p class="text-lg text-slate-600 mb-4">Every investigation must touch three distinct lanes to build confidence. A single lane provides a hunch; two lanes justify an investigation; three lanes converging confirm an incident. Pivot deliberately and do not chase one lane to exhaustion.</p>
+                
+                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 mb-6 mt-6">
+                    <button onclick="setLane('traffic')" id="btn-lane-traffic" class="lane-btn active flex-1 py-3 px-4 rounded-lg border border-teal-600 text-center font-bold transition-colors">🌐 Lane 1: Traffic</button>
+                    <button onclick="setLane('files')" id="btn-lane-files" class="lane-btn flex-1 py-3 px-4 rounded-lg border border-stone-300 text-slate-600 hover:border-teal-600 hover:text-teal-700 text-center font-bold transition-colors">📁 Lane 2: Files</button>
+                    <button onclick="setLane('logs')" id="btn-lane-logs" class="lane-btn flex-1 py-3 px-4 rounded-lg border border-stone-300 text-slate-600 hover:border-teal-600 hover:text-teal-700 text-center font-bold transition-colors">📝 Lane 3: Logs</button>
+                </div>
+
+                <div id="content-lane-traffic" class="block bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold mb-4 text-teal-800">The Five-Step Traffic Loop</h3>
+                    <p class="mb-4 text-slate-600">Apply these five steps to every pcap. Spend no more than 10 minutes on the first pass.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded shadow-sm border-l-4 border-teal-500">
+                            <h4 class="font-bold">1. Conversation Map</h4>
+                            <p class="text-sm text-slate-500">Who is talking to whom? (Deliverable: Top-10 convo table)</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm border-l-4 border-teal-500">
+                            <h4 class="font-bold">2. Protocol Mix</h4>
+                            <p class="text-sm text-slate-500">What is on the wire? (Deliverable: Protocol hierarchy)</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm border-l-4 border-teal-500">
+                            <h4 class="font-bold">3. Throughput Timeline</h4>
+                            <p class="text-sm text-slate-500">When do bytes flow? (Deliverable: I/O graph)</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm border-l-4 border-teal-500">
+                            <h4 class="font-bold">4. Endpoint Reputation</h4>
+                            <p class="text-sm text-slate-500">Known good or bad? (Deliverable: VT / WHOIS results)</p>
+                        </div>
+                        <div class="bg-white p-4 rounded shadow-sm border-l-4 border-teal-500 md:col-span-2">
+                            <h4 class="font-bold">5. Decode Suspect Flow</h4>
+                            <p class="text-sm text-slate-500">What was actually said? (Deliverable: Annotated excerpt)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-lane-files" class="hidden-section bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold mb-4 text-teal-800">File Analysis: M-A-C-B Model</h3>
+                    <p class="mb-4 text-slate-600">Analyze NTFS $STANDARD_INFORMATION timestamps. A classic dropper red flag is all four timestamps matching within ~1 second.</p>
+                    <table class="w-full text-left bg-white rounded shadow-sm overflow-hidden text-sm md:text-base">
+                        <thead class="bg-slate-100 border-b">
+                            <tr>
+                                <th class="p-3">Letter</th>
+                                <th class="p-3">Name</th>
+                                <th class="p-3">What changes it</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b"><td class="p-3 font-bold text-teal-700">M</td><td class="p-3">Modified</td><td class="p-3 text-slate-600">File content changed</td></tr>
+                            <tr class="border-b bg-stone-50"><td class="p-3 font-bold text-teal-700">A</td><td class="p-3">Accessed</td><td class="p-3 text-slate-600">File opened for read</td></tr>
+                            <tr class="border-b"><td class="p-3 font-bold text-teal-700">C</td><td class="p-3">Changed</td><td class="p-3 text-slate-600">MFT metadata changed (ACL, attribs)</td></tr>
+                            <tr><td class="p-3 font-bold text-teal-700">B</td><td class="p-3">Born</td><td class="p-3 text-slate-600">File created on this volume</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="mt-4 p-4 bg-rose-50 border border-rose-200 rounded text-rose-800 text-sm font-semibold">
+                        ⚠️ Mandatory: Lookup hashes on VirusTotal by URL ONLY. Never upload suspect binaries.
+                    </div>
+                </div>
+
+                <div id="content-lane-logs" class="hidden-section bg-stone-50 p-6 rounded-lg border border-stone-200">
+                    <h3 class="text-xl font-bold mb-4 text-teal-800">Event Logs: Windows & Sysmon</h3>
+                    <p class="mb-4 text-slate-600">Pair every success with preceding failures. Always pair the alert with the full command line.</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left bg-white rounded shadow-sm overflow-hidden text-sm md:text-base min-w-[600px]">
+                            <thead class="bg-slate-100 border-b">
+                                <tr>
+                                    <th class="p-3">Event ID</th>
+                                    <th class="p-3">Meaning</th>
+                                    <th class="p-3">Red Flag Context</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b"><td class="p-3 font-mono font-bold">4624</td><td class="p-3">Logon success</td><td class="p-3 text-slate-600">Type 10 (RDP) after-hours from new IP</td></tr>
+                                <tr class="border-b bg-stone-50"><td class="p-3 font-mono font-bold">4625</td><td class="p-3">Logon failure</td><td class="p-3 text-slate-600">>10 failures / minute = password spray</td></tr>
+                                <tr class="border-b"><td class="p-3 font-mono font-bold">4688</td><td class="p-3">Process created</td><td class="p-3 text-slate-600">Office app spawning cmd/PowerShell</td></tr>
+                                <tr class="border-b bg-rose-50"><td class="p-3 font-mono font-bold text-rose-700">1102</td><td class="p-3 font-semibold text-rose-700">Audit log cleared</td><td class="p-3 text-rose-700 font-semibold">Almost always malicious; freeze host</td></tr>
+                                <tr class="border-b"><td class="p-3 font-mono font-bold">Sysmon 1</td><td class="p-3">Process create</td><td class="p-3 text-slate-600">Parent = Office, child = scripting host</td></tr>
+                                <tr><td class="p-3 font-mono font-bold">Sysmon 10</td><td class="p-3">Process access</td><td class="p-3 text-slate-600">TargetImage = lsass.exe (credential dump)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-evaluation" class="hidden-section fade-in">
+            <div class="mb-8 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">Efficient Detection & Rigorous Analysis</h2>
+                <p class="text-lg text-slate-600 mb-6">Detection engineering should target behaviors that are painful for an attacker to change. When an anomaly is detected, rigorous analysis requires applying the HE-UH-C framework to eliminate confirmation bias.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    <div class="flex flex-col">
+                        <h3 class="text-xl font-bold mb-4 text-center">Pyramid of Pain</h3>
+                        <p class="text-sm text-center text-slate-500 mb-4">Click layers to understand attacker friction.</p>
+                        <div class="flex-grow flex flex-col justify-end space-y-1 pb-4">
+                            <div onclick="showPyramid('ttps')" class="pyramid-layer bg-rose-700 text-white font-bold text-center py-2 rounded-t-xl mx-[30%] shadow">TTPs (Tough)</div>
+                            <div onclick="showPyramid('tools')" class="pyramid-layer bg-rose-500 text-white font-bold text-center py-2 mx-[24%] shadow">Tools (Challenging)</div>
+                            <div onclick="showPyramid('artifacts')" class="pyramid-layer bg-amber-500 text-white font-bold text-center py-2 mx-[18%] shadow">Host/Net Artifacts (Annoying)</div>
+                            <div onclick="showPyramid('domains')" class="pyramid-layer bg-teal-500 text-white font-bold text-center py-2 mx-[12%] shadow">Domain Names (Simple)</div>
+                            <div onclick="showPyramid('ips')" class="pyramid-layer bg-teal-400 text-white font-bold text-center py-2 mx-[6%] shadow">IP Addresses (Easy)</div>
+                            <div onclick="showPyramid('hashes')" class="pyramid-layer bg-teal-300 text-slate-800 font-bold text-center py-2 mx-0 shadow rounded-b-xl">Hash Values (Trivial)</div>
+                        </div>
+                        <div id="pyramid-detail" class="bg-stone-100 p-4 rounded border border-stone-200 h-24 flex items-center justify-center text-center">
+                            <span class="text-slate-500 italic">Select a layer above...</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-stone-50 p-6 rounded-xl border border-stone-200 flex flex-col">
+                        <h3 class="text-xl font-bold mb-4">HE-UH-C Calculator</h3>
+                        <p class="text-sm text-slate-600 mb-4">Forces falsifiability and observable writing. Adjust your confidence to determine the next action.</p>
+                        
+                        <div class="space-y-4 flex-grow">
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">H - Happened</label>
+                                <input type="text" class="w-full p-2 border border-stone-300 rounded text-sm bg-white" placeholder="What did we observe? (No theory)">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-slate-700 mb-1">E - Evidence</label>
+                                <input type="text" class="w-full p-2 border border-stone-300 rounded text-sm bg-white" placeholder="Which specific artifacts support it?">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-rose-700 mb-1">UH - Un-evidence (Crucial)</label>
+                                <input type="text" class="w-full p-2 border border-rose-300 bg-rose-50 rounded text-sm" placeholder="What would prove this theory wrong?">
+                            </div>
+                            <div class="pt-4 border-t border-stone-200">
+                                <label class="block text-sm font-bold text-slate-700 mb-2">C - Confidence Score: <span id="conf-val" class="text-teal-700 text-lg">0%</span></label>
+                                <input type="range" id="conf-slider" min="0" max="100" value="0" class="w-full accent-teal-600">
+                            </div>
+                        </div>
+                        
+                        <div id="conf-action" class="mt-6 p-4 rounded-lg bg-slate-200 text-center font-bold text-slate-700 transition-colors">
+                            Awaiting Data
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="sec-escalation" class="hidden-section fade-in">
+            <div class="mb-8 bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                <h2 class="text-3xl font-bold mb-4 text-slate-900">Correct Identification & Escalation</h2>
+                <p class="text-lg text-slate-600 mb-6">Words drive who wakes up. Calling everything an incident exhausts the team; downplaying an incident loses critical response time. Understand the terminology funnel and pass the three confirmation gates before declaring.</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-stone-50 p-6 rounded-xl border border-stone-200">
+                        <h3 class="text-xl font-bold mb-4 text-center">NIST SP 800-61r2 Funnel</h3>
+                        <div class="chart-container" style="height: 250px; max-height: 300px;">
+                            <canvas id="funnelChart"></canvas>
+                        </div>
+                        <p class="text-xs text-center text-slate-500 mt-2">Rough survival rates of observability</p>
+                    </div>
+
+                    <div class="bg-white border border-stone-200 rounded-xl shadow-sm p-6">
+                        <h3 class="text-xl font-bold mb-4">The 3 Confirmation Gates</h3>
+                        <p class="text-sm text-slate-600 mb-4">All three must pass before escalation. Most skipped: Plausibility.</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <input type="checkbox" id="gate1" class="mt-1 h-5 w-5 text-teal-600 rounded border-stone-300" onchange="calcGates()">
+                                <div class="ml-3">
+                                    <label for="gate1" class="font-bold text-slate-800 block">1. Reproducibility</label>
+                                    <span class="text-sm text-slate-500">Can a second analyst reach the same observation?</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="gate2" class="mt-1 h-5 w-5 text-teal-600 rounded border-stone-300" onchange="calcGates()">
+                                <div class="ml-3">
+                                    <label for="gate2" class="font-bold text-slate-800 block">2. Persistence</label>
+                                    <span class="text-sm text-slate-500">Does behaviour persist across reboot/rotation?</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <input type="checkbox" id="gate3" class="mt-1 h-5 w-5 text-teal-600 rounded border-stone-300" onchange="calcGates()">
+                                <div class="ml-3">
+                                    <label for="gate3" class="font-bold text-slate-800 block">3. Plausibility (Critical)</label>
+                                    <span class="text-sm text-slate-500">Have you actively tried to disprove a benign explanation?</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="gate-result" class="mt-6 p-3 bg-stone-100 border border-stone-300 rounded text-center text-sm font-semibold text-slate-600">
+                            Check gates to determine action.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 text-white p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4">The One-Page Summary Rule</h3>
+                    <p class="mb-4 text-slate-300">Executives read one page. It must survive the shift handover.</p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>When:</strong> UTC + Local</div>
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>What:</strong> 1 sentence max</div>
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>Where:</strong> Asset/Zone</div>
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>Who:</strong> Affected dept</div>
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>How:</strong> Tool + Signal</div>
+                        <div class="border-l-2 border-teal-500 pl-3"><strong>Category:</strong> NIST label</div>
+                        <div class="border-l-2 border-teal-500 pl-3 md:col-span-2"><strong>Next Action:</strong> Named human + clock time deadline</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-200 border-t border-stone-300 py-6 mt-auto">
+        <div class="max-w-6xl mx-auto px-4 text-center text-sm text-slate-500">
+            <p><strong>Cyber.SoHo Educational Hub</strong> · Course 420-D01-AB · Cohort CYB-01</p>
+            <p class="mt-1">Building the IT's Future, Today and Together.</p>
+        </div>
+    </footer>
+
+    <script>
+        const toolsData = {
+            'pcap': { icon: '🛜', title: 'Packet Capture', desc: 'Scope: Bytes on the wire. Examples: Wireshark, tshark. Anti-pattern: Using for SLA reporting.' },
+            'nids': { icon: '👁️', title: 'Network IDS', desc: 'Scope: Patterns on the wire. Examples: Suricata, Zeek, Snort. Ideal for detecting known bad traffic flows.' },
+            'edr': { icon: '💻', title: 'Endpoint Detection', desc: 'Scope: Processes and files on host. Examples: Defender, CrowdStrike, Sysmon. "What happened on this specific box?"' },
+            'siem': { icon: '🧠', title: 'SIEM', desc: 'Scope: Aggregated logs & correlation. Examples: Splunk, Elastic. Best for slow trends and multi-source correlation. Anti-pattern: Forensic packet replay.' },
+            'infra': { icon: '📈', title: 'Infra Monitor', desc: 'Scope: Availability & metrics. Examples: Nagios, Prometheus. "Did service X go down?" Anti-pattern: Using uptime checks to detect breaches.' }
+        };
+
+        const pyramidData = {
+            'ttps': { text: 'TTPs (Tactics, Techniques, Procedures). Very painful for attackers to change. Detections here age in years.', color: 'text-rose-800' },
+            'tools': { text: 'Tools. Challenging to change. Attackers must learn new software.', color: 'text-rose-600' },
+            'artifacts': { text: 'Network/Host Artifacts. Annoying. Registry keys, specific directories.', color: 'text-amber-700' },
+            'domains': { text: 'Domain Names. Simple to change via DGA or new registrations.', color: 'text-teal-800' },
+            'ips': { text: 'IP Addresses. Easy to change using proxies or cloud infrastructure.', color: 'text-teal-700' },
+            'hashes': { text: 'Hash Values. Trivial. One byte flip = new hash. Detections age in hours.', color: 'text-slate-700' }
+        };
+
+        let baselineChartInstance = null;
+        let funnelChartInstance = null;
+
+        function navTo(sectionId) {
+            document.querySelectorAll('main > section').forEach(el => el.classList.add('hidden-section'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.remove('hidden-section');
+            document.getElementById('nav-' + sectionId).classList.add('active');
+
+            if(sectionId === 'sec-collection' && !baselineChartInstance) {
+                initBaselineChart();
+            }
+            if(sectionId === 'sec-escalation' && !funnelChartInstance) {
+                initFunnelChart();
+            }
+        }
+
+        function showTool(key) {
+            const display = document.getElementById('tool-display');
+            const data = toolsData[key];
+            display.innerHTML = '<div class="text-5xl mb-4">' + data.icon + '</div><h4 class="text-2xl font-bold mb-2">' + data.title + '</h4><p class="text-slate-300 leading-relaxed">' + data.desc + '</p>';
+        }
+
+        function setLane(lane) {
+            document.querySelectorAll('[id^="content-lane-"]').forEach(el => el.classList.add('hidden-section'));
+            document.querySelectorAll('.lane-btn').forEach(el => {
+                el.classList.remove('active', 'bg-[#0f766e]', 'text-white');
+                el.classList.add('text-slate-600', 'border-stone-300');
+            });
+            
+            document.getElementById('content-lane-' + lane).classList.remove('hidden-section');
+            const activeBtn = document.getElementById('btn-lane-' + lane);
+            activeBtn.classList.add('active', 'bg-[#0f766e]', 'text-white');
+            activeBtn.classList.remove('text-slate-600', 'border-stone-300');
+        }
+
+        function showPyramid(level) {
+            const detail = document.getElementById('pyramid-detail');
+            const data = pyramidData[level];
+            detail.innerHTML = '<span class="font-semibold ' + data.color + '">' + data.text + '</span>';
+        }
+
+        const confSlider = document.getElementById('conf-slider');
+        const confVal = document.getElementById('conf-val');
+        const confAction = document.getElementById('conf-action');
+
+        confSlider.addEventListener('input', function() {
+            const val = parseInt(this.value);
+            confVal.innerText = val + '%';
+            
+            confAction.className = 'mt-6 p-4 rounded-lg text-center font-bold transition-colors ';
+            if (val < 50) {
+                confAction.innerText = 'Action: Keep Collecting (Weak / One Lane)';
+                confAction.classList.add('bg-stone-200', 'text-stone-700');
+            } else if (val < 75) {
+                confAction.innerText = 'Action: Note in Shift Handover (Building)';
+                confAction.classList.add('bg-amber-100', 'text-amber-800');
+            } else if (val < 90) {
+                confAction.innerText = 'Action: Escalate to IR Lead (Strong)';
+                confAction.classList.add('bg-orange-100', 'text-orange-800');
+            } else {
+                confAction.innerText = 'Action: Declare Incident (Confirmed)';
+                confAction.classList.add('bg-rose-600', 'text-white');
+            }
+        });
+
+        function calcGates() {
+            const g1 = document.getElementById('gate1').checked;
+            const g2 = document.getElementById('gate2').checked;
+            const g3 = document.getElementById('gate3').checked;
+            
+            let score = 0;
+            if(g1) score += 2;
+            if(g2) score += 2;
+            if(g3) score += 2;
+
+            const res = document.getElementById('gate-result');
+            res.className = 'mt-6 p-3 border rounded text-center text-sm font-semibold transition-colors ';
+            
+            if (score === 6) {
+                res.innerText = '6/6: Declare incident; hand to IR.';
+                res.classList.add('bg-rose-100', 'border-rose-300', 'text-rose-800');
+            } else if (score >= 4) {
+                res.innerText = score + '/6: Investigate further; target weakest gate next.';
+                res.classList.add('bg-amber-100', 'border-amber-300', 'text-amber-800');
+            } else {
+                res.innerText = score + '/6: Stay in monitoring; do not waste IR time.';
+                res.classList.add('bg-stone-100', 'border-stone-300', 'text-slate-600');
+            }
+        }
+
+        function initBaselineChart() {
+            const ctx = document.getElementById('baselineChart').getContext('2d');
+            const labels = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00'];
+            const normalData = [10, 12, 8, 5, 7, 15, 30, 60, 95, 120, 110, 105, 90];
+            const p95Data =    [15, 18, 12, 10, 12, 25, 45, 80, 110, 140, 130, 125, 110];
+            const actualData = [9, 11, 85, 6, 8, 14, 32, 58, 92, 115, 108, 100, 88]; 
+
+            baselineChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Expected Traffic (Median)',
+                            data: normalData,
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'p95 Threshold (Baseline)',
+                            data: p95Data,
+                            borderColor: '#0f766e',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Observed Traffic (Actual)',
+                            data: actualData,
+                            borderColor: '#e11d48',
+                            backgroundColor: '#e11d48',
+                            pointRadius: [0,0,6,0,0,0,0,0,0,0,0,0,0],
+                            pointHoverRadius: 8,
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) { label += context.parsed.y + ' req/min'; }
+                                    if (context.dataIndex === 2 && context.datasetIndex === 2) {
+                                        return [label, '🚨 ALERT: Exceeds p95 threshold for 02:00'];
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Metric Volume' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initFunnelChart() {
+            const ctx = document.getElementById('funnelChart').getContext('2d');
+            funnelChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Event', 'Adverse Event', 'Incident', 'Breach'],
+                    datasets: [{
+                        label: 'Estimated Volume %',
+                        data: [100, 10, 1, 0.1],
+                        backgroundColor: [
+                            '#cbd5e1',
+                            '#fde68a',
+                            '#f87171',
+                            '#9f1239'
+                        ],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let text = '';
+                                    if(context.dataIndex === 0) text = 'Any observable occurrence';
+                                    if(context.dataIndex === 1) text = 'Event with negative consequence';
+                                    if(context.dataIndex === 2) text = 'Suspected/confirmed CIA violation';
+                                    if(context.dataIndex === 3) text = 'Confirmed violation + notification trigger';
+                                    return context.parsed.x + '% - ' + text;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'logarithmic',
+                            title: { display: true, text: 'Volume (Log Scale %)' },
+                            min: 0.05,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        window.onload = function() {
+            initBaselineChart();
+        };
+
+    </script>
+</body>
+</html>
+
+
+
