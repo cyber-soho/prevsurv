@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Monitoring Optimizer - Interactive Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Cyber Neutral - Grounded in #FDFBF7 (Cream) with #2D3748 (Slate) and #4A5568 (Steel Blue) accents. -->
+    <style>
+        :root {
+            --bg-main: #fdfbf7;
+            --card-bg: #ffffff;
+            --accent-primary: #3182ce;
+            --accent-secondary: #48bb78;
+            --text-dark: #2d3748;
+        }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-dark);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 350px;
+        }
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+        .nav-link.active {
+            border-bottom: 3px solid var(--accent-primary);
+            color: var(--accent-primary);
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 400px; max-height: 450px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Application Structure Plan: 
+        1. Dashboard Overview: Introduces the crisis of alert fatigue and core SNR metrics. 
+        2. Taming the Noise: Interactive section focusing on filtering, allowlists, and the "scalpel" approach.
+        3. Scaling Smart: Focused on performance impacts, baselines (z-scores), and resource budgets.
+        4. Formula Vault & Tools: A quick-access library of the report's key mathematical principles.
+        Chosen to prioritize the "Analysis & Structure" of the report, allowing users to interact with the formulas directly.
+    -->
+
+    <nav class="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <h1 class="text-xl font-bold tracking-tight text-slate-800">Cyber.SoHo <span class="font-light">Monitoring Optimizer</span></h1>
+            <div class="flex space-x-6 text-sm font-medium">
+                <button onclick="switchTab('dashboard')" class="nav-link active py-1" id="nav-dashboard">Dashboard</button>
+                <button onclick="switchTab('noise')" class="nav-link py-1" id="nav-noise">Noise Control</button>
+                <button onclick="switchTab('scaling')" class="nav-link py-1" id="nav-scaling">Scaling Smart</button>
+                <button onclick="switchTab('tools')" class="nav-link py-1" id="nav-tools">Formula Vault</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8">
+
+        <!-- DASHBOARD TAB -->
+        <section id="tab-dashboard" class="space-y-8">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-4">The Monitoring Crisis</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    A monitoring system you can't keep up with isn't protecting you. This dashboard visualizes the "Danger Zone"—where the raw volume of alerts exceeds human capacity. Optimization is the process of making surveillance <strong>quieter, wider, and lighter</strong> without going blind.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6 lg:col-span-2">
+                    <h3 class="text-lg font-bold mb-4">Alert Fatigue & Capacity Visualization</h3>
+                    <p class="text-sm text-slate-500 mb-6">See how noise (benign alerts) swallows the signal (real threats). Adjust the noise to see the "Danger Zone" decrease.</p>
+                    <div class="chart-container">
+                        <canvas id="snrChart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 flex flex-col justify-center space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700">Monthly Noise (Alerts)</label>
+                        <input type="range" id="noiseInput" min="500" max="5000" value="2500" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-2">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1"><span>500</span><span>5,000</span></div>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <p class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-1">Signal-to-Noise Ratio (SNR)</p>
+                        <p id="snrDisplay" class="text-3xl font-mono text-blue-600">1:25</p>
+                    </div>
+                    <div id="dangerAlert" class="p-4 rounded-lg border border-red-200 bg-red-50 hidden">
+                        <p class="text-sm font-bold text-red-700">DANGER ZONE DETECTED</p>
+                        <p class="text-xs text-red-600">Untouched alerts = Raw Alerts - Capacity. You are currently flying blind.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- NOISE CONTROL TAB -->
+        <section id="tab-noise" class="hidden space-y-8">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-4">Lecture 1: Taming the Noise</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    Tuning does <strong>not</strong> remove real threats—it removes the junk so the real ones become visible. Use "The Four Levers" below to transform raw events into meaningful security stories.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="glass-card p-5 border-l-4 border-blue-500">
+                    <h4 class="font-bold text-slate-800">Deduplicate</h4>
+                    <p class="text-xs text-slate-500 mt-2">Fold identical alerts in a time window into one. Don't page 200x for one event.</p>
+                </div>
+                <div class="glass-card p-5 border-l-4 border-green-500">
+                    <h4 class="font-bold text-slate-800">Correlate</h4>
+                    <p class="text-xs text-slate-500 mt-2">Group related alerts (e.g., password spray) into a single incident story.</p>
+                </div>
+                <div class="glass-card p-5 border-l-4 border-yellow-500">
+                    <h4 class="font-bold text-slate-800">Threshold</h4>
+                    <p class="text-xs text-slate-500 mt-2">Define "how much is too much." Balance triggers to avoid false-positive storms.</p>
+                </div>
+                <div class="glass-card p-5 border-l-4 border-red-500">
+                    <h4 class="font-bold text-slate-800">Severity</h4>
+                    <p class="text-xs text-slate-500 mt-2">Rank incidents so human analysts tackle the worst, highest-risk items first.</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-8">
+                <h3 class="text-xl font-bold mb-6">Interactive Tuning: False Positives vs. Negatives</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-4">
+                        <div class="p-4 bg-blue-50 rounded-lg">
+                            <h5 class="font-bold text-blue-800">The Allowlist Scalpel</h5>
+                            <p class="text-sm text-blue-700">Trust a <strong>specific</strong> source for a <strong>specific</strong> rule. Never trust an IP for everything.</p>
+                        </div>
+                        <div class="p-4 bg-orange-50 rounded-lg">
+                            <h5 class="font-bold text-orange-800">The Suppression Rule</h5>
+                            <p class="text-sm text-orange-700">Mute narrow, known-benign patterns (e.g., AV test files) to keep the channel clear.</p>
+                        </div>
+                        <p class="text-sm italic text-slate-500 mt-4 underline decoration-blue-200">Golden Rule: Good tuning is provable. Ensure real attacks still fire after your change.</p>
+                    </div>
+                    <div class="bg-slate-900 rounded-xl p-6 text-slate-300 font-mono text-sm">
+                        <p class="text-emerald-400 mb-2">// Reduction Calculation Example</p>
+                        <p>let before = 5000;</p>
+                        <p>let after = 1200;</p>
+                        <p class="mt-4">let win = ((before - after) / before) * 100;</p>
+                        <p class="text-white mt-2">console.log(`Alerts reduced by ${win}%`);</p>
+                        <div class="mt-6 p-3 bg-slate-800 rounded border border-slate-700 text-center">
+                            <span class="text-emerald-400 text-lg font-bold">76% Noise Reduction</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCALING SMART TAB -->
+        <section id="tab-scaling" class="hidden space-y-8">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-4">Lecture 2: Scaling Smart</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    The "Observer Effect" reminds us that monitoring has a cost. If sensors burn too much CPU, they drop packets—causing you to see <strong>less</strong> while spending <strong>more</strong>.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-bold mb-4">The Performance Budget</h3>
+                    <div class="space-y-6">
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div><span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-blue-600 bg-blue-200">CPU Budget</span></div>
+                                <div class="text-right"><span class="text-xs font-semibold inline-block text-blue-600">Target ≤ 70%</span></div>
+                            </div>
+                            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-100"><div style="width:70%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500"></div></div>
+                        </div>
+                        <div class="relative pt-1">
+                            <div class="flex mb-2 items-center justify-between">
+                                <div><span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-red-600 bg-red-200">Packet Loss</span></div>
+                                <div class="text-right"><span class="text-xs font-semibold inline-block text-red-600">Target ≤ 2%</span></div>
+                            </div>
+                            <div class="overflow-hidden h-2 mb-4 text-xs flex rounded bg-red-100"><div style="width:20%" class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-red-500"></div></div>
+                        </div>
+                    </div>
+                    <div class="mt-6 p-4 bg-slate-50 rounded-lg text-sm text-slate-600">
+                        <strong>Scaling Tip:</strong> Filter at the source. Shipping everything only to discard it at the SIEM is the most expensive way to monitor.
+                    </div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-bold mb-4">Z-Score & 3-Sigma Baseline</h3>
+                    <p class="text-sm text-slate-500 mb-4">Define "Normal" mathematically using mean and standard deviation (σ).</p>
+                    <div class="space-y-4">
+                        <div class="flex gap-2">
+                            <input type="number" id="baseMean" placeholder="Mean" class="w-1/2 p-2 border rounded" value="100">
+                            <input type="number" id="baseSigma" placeholder="Sigma (σ)" class="w-1/2 p-2 border rounded" value="15">
+                        </div>
+                        <input type="number" id="currentValue" placeholder="Current Hour Value" class="w-full p-2 border rounded" value="160">
+                        <button onclick="calculateZScore()" class="w-full bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-700 transition">Calculate Deviation</button>
+                        <div id="zScoreResult" class="p-4 rounded-lg text-center font-bold">---</div>
+                    </div>
+                    <p class="text-[10px] uppercase text-slate-400 mt-4">Note: Flag activity when |z| > 3 (The 3-Sigma Rule).</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-6">
+                <h3 class="text-lg font-bold mb-4">Tiered Architecture Pattern</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-center text-xs font-bold uppercase tracking-widest text-slate-500">
+                    <div class="p-8 border-2 border-dashed border-slate-200 rounded-lg">Agents & Sensors<br><span class="font-light normal-case opacity-60">Edge Collection</span></div>
+                    <div class="flex items-center justify-center">→</div>
+                    <div class="p-8 border-2 border-slate-200 bg-slate-50 rounded-lg">Local Collectors<br><span class="font-light normal-case opacity-60">Filter @ Source</span></div>
+                    <div class="flex items-center justify-center">→</div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-2 text-center text-xs font-bold uppercase tracking-widest text-slate-500 mt-2">
+                    <div class="md:col-start-2 p-8 border-2 border-slate-200 bg-slate-100 rounded-lg">Aggregators<br><span class="font-light normal-case opacity-60">Roll-up & Correlate</span></div>
+                    <div class="flex items-center justify-center">→</div>
+                    <div class="p-8 bg-blue-600 text-white rounded-lg">SIEM / Sentinel<br><span class="font-light normal-case opacity-80">Analysis & Storage</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TOOLS TAB -->
+        <section id="tab-tools" class="hidden space-y-8">
+            <div class="max-w-3xl">
+                <h2 class="text-3xl font-extrabold text-slate-900 mb-4">Formula Vault & Tech Stack</h2>
+                <p class="text-lg text-slate-600 leading-relaxed">
+                    Essential metrics and the modern open-source toolchain for professional detection engineering.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-card p-0 overflow-hidden">
+                    <div class="bg-slate-800 text-white px-6 py-3 font-bold text-sm">Key Optimization Formulas</div>
+                    <div class="p-6">
+                        <table class="w-full text-sm">
+                            <tr class="border-b"><td class="py-2 text-slate-500">Signal-to-Noise</td><td class="py-2 font-mono text-right">Threats ÷ Noise</td></tr>
+                            <tr class="border-b"><td class="py-2 text-slate-500">Analyst Capacity</td><td class="py-2 font-mono text-right">Total Min ÷ Min/Alert</td></tr>
+                            <tr class="border-b"><td class="py-2 text-slate-500">FP Reduction</td><td class="py-2 font-mono text-right">((B-A) ÷ B) × 100</td></tr>
+                            <tr class="border-b"><td class="py-2 text-slate-500">Z-Score</td><td class="py-2 font-mono text-right">(x - mean) ÷ σ</td></tr>
+                            <tr><td class="py-2 text-slate-500">Performance</td><td class="py-2 font-mono text-right">CPU ≤ 70%</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-bold mb-4">The Modern Open Stack</h3>
+                    <ul class="space-y-3">
+                        <li class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            <div><strong>OpenTelemetry</strong> <span class="text-xs text-slate-500">— Traces, Metrics, Logs</span></div>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            <div><strong>Sigma</strong> <span class="text-xs text-slate-500">— Portable Detection Rules</span></div>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            <div><strong>Wazuh</strong> <span class="text-xs text-slate-500">— Open Source XDR/SIEM</span></div>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full"></span>
+                            <div><strong>Zeek / Suricata</strong> <span class="text-xs text-slate-500">— Network Analysis</span></div>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-lg text-xs text-orange-800">
+                        <strong>Frameworks:</strong> NIST CSF, ISO 27001, CIS Controls, and MITRE ATT&CK.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-20 border-t border-gray-200 py-10 bg-white">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-slate-400 text-sm">© Cyber.SoHo Educational Hub. Preventive Surveillance Course Material.</p>
+            <!-- Visualization & Content Choices: 
+                - SNR Chart -> Chart.js Line Chart to show crossover between capacity and alert volume.
+                - Z-Score -> Dynamic JS calculator for numerical understanding of sigma rules.
+                - Formulas -> Clean HTML table for quick reference.
+                - Architecture -> CSS-grid based flowchart (NO SVG).
+                - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+            -->
+        </div>
+    </footer>
+
+    <script>
+        // State Management
+        let snrChart;
+        const ANALYST_CAPACITY = 2000; // Mock threshold in minutes/month converted to alert capacity
+
+        function switchTab(tabId) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+        }
+
+        function initCharts() {
+            const ctx = document.getElementById('snrChart').getContext('2d');
+            snrChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [
+                        {
+                            label: 'Raw Alerts (Noise)',
+                            data: [2500, 2500, 2500, 2500],
+                            borderColor: '#cbd5e0',
+                            backgroundColor: 'rgba(203, 213, 224, 0.2)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'SOC Capacity',
+                            data: [2000, 2000, 2000, 2000],
+                            borderColor: '#3182ce',
+                            borderDash: [5, 5],
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function updateSNR() {
+            const noise = parseInt(document.getElementById('noiseInput').value);
+            const snr = (100 / noise).toFixed(2); // Assuming 100 fixed signals for demo
+            document.getElementById('snrDisplay').innerText = `1:${Math.round(noise/100)}`;
+            
+            // Update Chart
+            snrChart.data.datasets[0].data = [noise, noise, noise, noise];
+            snrChart.update();
+
+            // Toggle Danger Zone
+            const dangerDiv = document.getElementById('dangerAlert');
+            if (noise > ANALYST_CAPACITY) {
+                dangerDiv.classList.remove('hidden');
+            } else {
+                dangerDiv.classList.add('hidden');
+            }
+        }
+
+        function calculateZScore() {
+            const x = parseFloat(document.getElementById('currentValue').value);
+            const mean = parseFloat(document.getElementById('baseMean').value);
+            const sigma = parseFloat(document.getElementById('baseSigma').value);
+            const resultBox = document.getElementById('zScoreResult');
+
+            if (sigma === 0) return;
+
+            const z = (x - mean) / sigma;
+            const absZ = Math.abs(z);
+
+            let message = `z-score: ${z.toFixed(2)}`;
+            resultBox.className = "p-4 rounded-lg text-center font-bold ";
+
+            if (absZ > 3) {
+                message += " - [ OUTLIER DETECTED ]";
+                resultBox.classList.add("bg-red-100", "text-red-700");
+            } else {
+                message += " - [ NORMAL OPERATION ]";
+                resultBox.classList.add("bg-green-100", "text-green-700");
+            }
+            resultBox.innerText = message;
+        }
+
+        // Listeners
+        document.getElementById('noiseInput').addEventListener('input', updateSNR);
+
+        window.onload = () => {
+            initCharts();
+            updateSNR();
+        };
+    </script>
+</body>
+</html>
+
+
+
