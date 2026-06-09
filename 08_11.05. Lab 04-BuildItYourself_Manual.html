@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build Your Own Lab 4 Evidence - Cyber.SoHo</title>
+<style>
+  :root{
+    --paper:#FAF7F2; --paper2:#fff; --teal:#0E7C7B; --teal-d:#0a5f5e; --rust:#B5440C;
+    --ink:#23201c; --muted:#6b665e; --line:#e3ddd2;
+    --serif:Georgia,"Times New Roman",serif; --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.62;font-size:16.5px}
+  .progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--rust);z-index:50}
+  .topnav{position:sticky;top:0;z-index:40;background:rgba(250,247,242,.93);backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line)}
+  .topnav .inner{max-width:920px;margin:0 auto;padding:9px 20px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .topnav a{color:var(--teal-d);text-decoration:none;font-size:.82rem;font-weight:600}
+  .topnav a:hover{color:var(--rust)}
+  .topnav .brand{font-family:var(--serif);color:var(--teal);font-weight:700;margin-right:auto;font-size:.95rem}
+  .wrap{max-width:920px;margin:0 auto;padding:30px 20px 80px}
+  header.hero{border-bottom:3px solid var(--teal);padding-bottom:18px;margin-bottom:8px}
+  header.hero .kicker{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rust);font-weight:700}
+  h1{font-family:var(--serif);color:var(--teal);font-size:2.05rem;line-height:1.15;margin:.25rem 0 .4rem}
+  header.hero .meta{font-size:.86rem;color:var(--muted)}
+  header.hero .tag{font-style:italic;color:var(--rust);font-size:.9rem;margin-top:6px}
+  section{padding:26px 0;border-bottom:1px solid var(--line)}
+  h2{font-family:var(--serif);color:var(--teal);font-size:1.45rem;margin:0 0 .5rem;scroll-margin-top:64px}
+  h2 .num{color:var(--rust);font-weight:700;margin-right:.4em}
+  h3{font-size:1.05rem;color:var(--teal-d);margin:1.3rem 0 .3rem}
+  p{margin:.6rem 0}
+  a{color:var(--teal-d)}
+  ul,ol{margin:.5rem 0 .5rem 1.2rem;padding:0}
+  li{margin:.3rem 0}
+  code{font-family:var(--mono);background:#efe9df;border:1px solid var(--line);border-radius:5px;padding:.05em .35em;font-size:.86em}
+  .callout{border-left:4px solid var(--rust);background:#fff;border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0}
+  .callout.calm{border-left-color:var(--teal)}
+  .callout h4{margin:0 0 .35rem;color:var(--rust);font-size:.95rem}
+  .callout.calm h4{color:var(--teal)}
+  .code{margin:16px 0;border:1px solid var(--line);border-radius:11px;overflow:clip;background:#1f1c18}
+  .codebar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#2a2620}
+  .codebar .fn{font-family:var(--mono);font-size:.8rem;color:#e9c9a8}
+  .codebar button{background:var(--teal);color:#fff;border:0;border-radius:6px;padding:5px 12px;font-size:.78rem;font-weight:600;cursor:pointer}
+  .codebar button:hover{background:#10918f}
+  .codebar button:focus-visible{outline:2px solid var(--rust);outline-offset:2px}
+  textarea.src{width:100%;border:0;background:#1f1c18;color:#f3eee4;font-family:var(--mono);font-size:.8rem;
+    line-height:1.5;padding:14px 14px;resize:vertical;white-space:pre;overflow:auto}
+  pre.term{background:#15130f;color:#cfe7e3;border-radius:10px;padding:14px;font-family:var(--mono);font-size:.82rem;overflow:auto}
+  table{width:100%;border-collapse:collapse;margin:16px 0;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:clip}
+  th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);font-size:.9rem;vertical-align:top}
+  th{background:var(--teal);color:#fff;font-weight:600}
+  tr:last-child td{border-bottom:0}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;border-radius:999px;padding:1px 9px}
+  .pill.ok{background:#e7f3f1;color:var(--teal-d);border:1px solid #cfe2e0}
+  .pill.bad{background:#f7e7df;color:var(--rust);border:1px solid #ecc9b9}
+  .disc{font-size:.86rem;color:#4f4a42}
+  .disc h3{color:var(--rust)}
+  footer{margin-top:30px;text-align:center;color:var(--muted);font-size:.8rem}
+  footer .tag{font-style:italic;color:var(--rust);margin-top:4px}
+  .totop{position:fixed;right:18px;bottom:18px;background:var(--teal);color:#fff;border:0;border-radius:50%;
+    width:44px;height:44px;font-size:1.1rem;cursor:pointer;opacity:0;pointer-events:none;transition:opacity .2s;z-index:45}
+  .totop.show{opacity:.92;pointer-events:auto}
+  .totop:focus-visible{outline:3px solid var(--rust);outline-offset:2px}
+  @media (max-width:560px){ body{font-size:16px} h1{font-size:1.7rem} .topnav .brand{display:none} }
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<nav class="topnav"><div class="inner">
+  <span class="brand">Cyber.SoHo</span>
+  <a href="#read">Read first</a><a href="#before">Before you start</a><a href="#build">Build it</a>
+  <a href="#evtx">Event log</a><a href="#vt">VirusTotal</a><a href="#av">Antivirus</a><a href="#check">Did it work?</a><a href="#legal">Terms</a>
+</div></nav>
+
+<div class="wrap">
+<header class="hero">
+  <div class="kicker">Course Procedure Manual &middot; Supplement</div>
+  <h1>Build Your Own Lab 4 Evidence</h1>
+  <div class="meta">Preventive Surveillance in Cybersecurity &middot; 420-D01-AB &middot; Cohort CYB-01 &middot; Lab 4 (Anomaly Triage)</div>
+  <div class="tag">From the Industry to the Classroom - Building the IT's Future, Today and Together!</div>
+</header>
+
+<section id="read">
+  <h2><span class="num">0.</span>Read this first - what you are about to do</h2>
+  <p>Instead of downloading an evidence pack, you are going to <strong>make your own copy</strong> of the three Lab 4 evidence items, right on your lab virtual machine, by running a short script that is printed in full further down. A few minutes of copy-paste and you will have the same capture, the same eight "quarantined" files, and the same domain-controller log everyone else is working from.</p>
+  <p>Why do it this way? Two reasons. First, it sidesteps the file-transfer headaches some of you ran into. Second - and this is the part worth slowing down for - building the evidence yourself is genuinely how analysts learn. You read a packet trace better once you have seen how one is put together. Nothing in this exercise is downloaded from anyone; you create every byte locally.</p>
+
+  <div class="callout calm">
+    <h4>Nobody is attacking you. Read this twice.</h4>
+    <p>Every file you are about to create is <strong>fake and harmless</strong>. The "exfiltration" traffic is a stream of random bytes going nowhere. The "malware" files are plain text that says, in plain English, that it is a training decoy - there is no program inside them, nothing executes, nothing phones home. The "brute-force" log is a list of invented rows in a spreadsheet. The company in the scenario, Plateau Realty Inc., does not exist.</p>
+    <p>Your instructor is not hacking your machine, and this kit cannot be used to hack anyone else's. It is a teaching set, the cybersecurity equivalent of a crash-test dummy. The only thing that looks scary is the <em>naming</em> - a file called <code>svchost.exe</code> or <code>invoice.pdf.exe</code> is meant to look suspicious so you can practise spotting the trick. Open any of them in Notepad and you will see the joke for yourself.</p>
+  </div>
+
+  <div class="callout">
+    <h4>One thing your antivirus might do (and why it is fine)</h4>
+    <p>This particular set was built to leave your antivirus alone - there is deliberately no live sample and no test-virus string in it, so a normal scan should pass without a peep. If you have an unusually aggressive endpoint agent it might still raise an eyebrow at a text file wearing an <code>.exe</code> costume. That is a false positive, not a real detection, and the fix is a thirty-second folder exclusion covered in <a href="#av">section 6</a>. Build everything inside your isolated lab VM - never on the laptop you use for banking, email, or work.</p>
+  </div>
+</section>
+
+<section id="before">
+  <h2><span class="num">1.</span>Before you start</h2>
+  <p>You need your Linux sensor VM (<code>CYB01-SENSOR-01</code>, Ubuntu 22.04) with Python 3 and pip. The capture builder uses Scapy; the file and log builders use two small libraries for a real Word document and a real JPEG. Install all three in one line:</p>
+  <pre class="term">sudo apt update
+sudo apt install -y python3-pip
+pip install --user scapy python-docx pillow</pre>
+  <p>If <code>pip install --user</code> is blocked on your build of Ubuntu, add <code>--break-system-packages</code> to that line. Make a working folder and move into it - the script writes everything into a <code>lab4_evidence/</code> subfolder beneath wherever you run it:</p>
+  <pre class="term">mkdir -p ~/cohort-cyb01/lab4 &amp;&amp; cd ~/cohort-cyb01/lab4</pre>
+  <p>The Event Viewer and PowerShell steps later on (sections 2c and 3) happen on your Windows analyst VM, <code>CYB01-ANALYST-01</code>. You can do the whole network and file part on Linux first and deal with Windows after.</p>
+</section>
+
+<section id="build">
+  <h2><span class="num">2.</span>Build everything in one go</h2>
+  <h3>2a. Save the builder</h3>
+  <p>Copy the script below into a file called <code>build_lab4_evidence.py</code> in your working folder. It is long because it is honest - every packet and every row is laid out so you can read exactly what is being made. Nothing is hidden, and nothing in here is dangerous; it is all <code>print</code>, random bytes, and ordinary file writes.</p>
+  <div class="code"><div class="codebar"><span class="fn">build_lab4_evidence.py</span><button class="copy">Copy</button></div><textarea class="src" rows="26" readonly>#!/usr/bin/env python3
+# ==========================================================================
+#  Cyber.SoHo Educational Hub - Lab 4 evidence builder (student copy)
+#  420-D01-AB / CYB-01
+#
+#  This makes YOUR OWN copy of the three Lab 4 evidence items on your lab VM:
+#    lab4_evidence/plateau_22h00_22h30.pcapng     (synthetic capture)
+#    lab4_evidence/suspicious_files/  (8 harmless decoys)
+#    lab4_evidence/dc01_security_events.csv + .json  (synthetic DC log)
+#
+#  Everything below is FAKE. The "attack" traffic is random bytes, the
+#  "malware" files are plain-text decoys, and the "brute-force" log is
+#  invented rows. None of it can run, spread, phone home, or harm anything.
+#  No EICAR / no real sample is used, so your antivirus has nothing to bite.
+# ==========================================================================
+import os, struct, random, csv, json, hashlib
+from datetime import datetime, timezone, timedelta
+
+OUTDIR = "lab4_evidence"
+FILES  = os.path.join(OUTDIR, "suspicious_files")
+os.makedirs(FILES, exist_ok=True)
+random.seed(1337)
+
+EDT = timezone(timedelta(hours=-4))   # Montreal in June is EDT (UTC-4)
+def local(h, m, s=0):
+    return datetime(2026, 6, 8, h, m, s, tzinfo=EDT).astimezone(timezone.utc).timestamp()
+def epoch(y, mo, d, h, mi, s=0):
+    return datetime(y, mo, d, h, mi, s, tzinfo=EDT).timestamp()
+
+# --------------------------------------------------------------------------
+# PART A - the synthetic capture
+# --------------------------------------------------------------------------
+def build_pcap():
+    from scapy.all import Ether, IP, TCP, UDP, ICMP, ARP, DNS, DNSQR, DNSRR, NTP, Raw, conf
+    from scapy.utils import PcapNgWriter
+    conf.verb = 0
+    MAC_WS, MAC_GW, MAC_DNS, MAC_PRN = "02:42:0a:1e:00:14", "02:42:0a:1e:00:01", "02:42:0a:1e:00:05", "02:42:0a:1e:00:31"
+    IP_WS, IP_GW, IP_DNS, IP_PRN = "10.30.0.14", "10.30.0.1", "10.30.0.5", "10.30.0.49"
+    IP_CBC, IP_UPD, IP_QUAD9, IP_BEACON = "192.0.2.20", "192.0.2.80", "192.0.2.9", "203.0.113.66"
+    pkts = []
+    def add(p, t): p.time = float(t); pkts.append(p)
+
+    def tls_flow(ip_c, ip_s, sport, dport, segments, t0, gap, mac_s=MAC_GW):
+        seq_c, seq_s, t = 1000, 5000, t0
+        add(Ether(src=MAC_WS, dst=mac_s)/IP(src=ip_c, dst=ip_s)/TCP(sport=sport, dport=dport, flags="S", seq=seq_c, window=64240), t); t += gap
+        add(Ether(src=mac_s, dst=MAC_WS)/IP(src=ip_s, dst=ip_c)/TCP(sport=dport, dport=sport, flags="SA", seq=seq_s, ack=seq_c+1, window=65535), t); t += gap
+        seq_c += 1
+        add(Ether(src=MAC_WS, dst=mac_s)/IP(src=ip_c, dst=ip_s)/TCP(sport=sport, dport=dport, flags="A", seq=seq_c, ack=seq_s+1, window=64240), t); t += gap
+        seq_s += 1
+        for direction, payload in segments:
+            if direction == "c2s":
+                add(Ether(src=MAC_WS, dst=mac_s)/IP(src=ip_c, dst=ip_s)/TCP(sport=sport, dport=dport, flags="PA", seq=seq_c, ack=seq_s, window=64240)/Raw(load=payload), t); t += gap
+                seq_c += len(payload)
+                add(Ether(src=mac_s, dst=MAC_WS)/IP(src=ip_s, dst=ip_c)/TCP(sport=dport, dport=sport, flags="A", seq=seq_s, ack=seq_c, window=65535), t)
+            else:
+                add(Ether(src=mac_s, dst=MAC_WS)/IP(src=ip_s, dst=ip_c)/TCP(sport=dport, dport=sport, flags="PA", seq=seq_s, ack=seq_c, window=65535)/Raw(load=payload), t); t += gap
+                seq_s += len(payload)
+                add(Ether(src=MAC_WS, dst=mac_s)/IP(src=ip_c, dst=ip_s)/TCP(sport=sport, dport=dport, flags="A", seq=seq_c, ack=seq_s, window=64240), t)
+        add(Ether(src=MAC_WS, dst=mac_s)/IP(src=ip_c, dst=ip_s)/TCP(sport=sport, dport=dport, flags="FA", seq=seq_c, ack=seq_s), t); t += gap
+        add(Ether(src=mac_s, dst=MAC_WS)/IP(src=ip_s, dst=ip_c)/TCP(sport=dport, dport=sport, flags="FA", seq=seq_s, ack=seq_c+1), t)
+
+    def client_hello(sni):
+        name = sni.encode()
+        sni_entry = b"\x00" + struct.pack(">H", len(name)) + name
+        sni_list  = struct.pack(">H", len(sni_entry)) + sni_entry
+        ext = struct.pack(">H", 0x0000) + struct.pack(">H", len(sni_list)) + sni_list
+        body = (b"\x03\x03" + os.urandom(32) + b"\x00" + b"\x00\x04\x13\x01\x00\x2f" + b"\x01\x00"
+                + struct.pack(">H", len(ext)) + ext)
+        hs = b"\x01" + struct.pack(">I", len(body))[1:] + body
+        return b"\x16\x03\x03" + struct.pack(">H", len(hs)) + hs
+    def app_data(n):
+        p = bytes(random.getrandbits(8) for _ in range(n))
+        return b"\x17\x03\x03" + struct.pack(">H", len(p)) + p
+
+    # ARP
+    add(Ether(src=MAC_WS, dst="ff:ff:ff:ff:ff:ff")/ARP(op=1, hwsrc=MAC_WS, psrc=IP_WS, pdst=IP_GW), local(22,0,3))
+    add(Ether(src=MAC_GW, dst=MAC_WS)/ARP(op=2, hwsrc=MAC_GW, psrc=IP_GW, hwdst=MAC_WS, pdst=IP_WS), local(22,0,3))
+    add(Ether(src=MAC_PRN, dst="ff:ff:ff:ff:ff:ff")/ARP(op=1, hwsrc=MAC_PRN, psrc=IP_PRN, pdst=IP_WS), local(22,2,11))
+    add(Ether(src=MAC_WS, dst=MAC_PRN)/ARP(op=2, hwsrc=MAC_WS, psrc=IP_WS, hwdst=MAC_PRN, pdst=IP_PRN), local(22,2,11))
+    # DNS
+    def dns_pair(q, ip, t, txid):
+        add(Ether(src=MAC_WS, dst=MAC_DNS)/IP(src=IP_WS, dst=IP_DNS)/UDP(sport=50000+txid, dport=53)/DNS(id=txid, rd=1, qd=DNSQR(qname=q)), t)
+        add(Ether(src=MAC_DNS, dst=MAC_WS)/IP(src=IP_DNS, dst=IP_WS)/UDP(sport=53, dport=50000+txid)/DNS(id=txid, qr=1, rd=1, ra=1, qd=DNSQR(qname=q), an=DNSRR(rrname=q, type="A", ttl=300, rdata=ip)), t+0.012)
+    dns_pair("cbc.ca.", IP_CBC, local(22,1,5), 0x1a01)
+    dns_pair("www.cyber.gc.ca.", "192.0.2.40", local(22,3,40), 0x1a02)
+    dns_pair("update.windows.test.", IP_UPD, local(22,5,2), 0x1a03)
+    dns_pair("cdn.exf-example.com.", IP_BEACON, local(22,6,58), 0x1a04)
+    # ICMP
+    for i in range(4):
+        t = local(22,4,10)+i
+        add(Ether(src=MAC_WS, dst=MAC_GW)/IP(src=IP_WS, dst=IP_QUAD9)/ICMP(type=8, id=0x4242, seq=i)/Raw(load=b"abcdefghijklmnopqrstuvwabcdefghi"), t)
+        add(Ether(src=MAC_GW, dst=MAC_WS)/IP(src=IP_QUAD9, dst=IP_WS)/ICMP(type=0, id=0x4242, seq=i)/Raw(load=b"abcdefghijklmnopqrstuvwabcdefghi"), t+0.018)
+    # surprise: NTP + mDNS
+    add(Ether(src=MAC_WS, dst=MAC_GW)/IP(src=IP_WS, dst=IP_GW)/UDP(sport=123, dport=123)/NTP(version=4, mode=3), local(22,2,30))
+    add(Ether(src=MAC_GW, dst=MAC_WS)/IP(src=IP_GW, dst=IP_WS)/UDP(sport=123, dport=123)/NTP(version=4, mode=4, stratum=2), local(22,2,30)+0.02)
+    add(Ether(src=MAC_PRN, dst="01:00:5e:00:00:fb")/IP(src=IP_PRN, dst="224.0.0.251")/UDP(sport=5353, dport=5353)/DNS(qr=1, qd=DNSQR(qname="_ipp._tcp.local.", qtype="PTR")), local(22,9,12))
+    # benign TLS
+    b = [("c2s", client_hello("cbc.ca"))]
+    for _ in range(6): b += [("s2c", app_data(random.randint(900,1400))), ("c2s", app_data(random.randint(120,300)))]
+    tls_flow(IP_WS, IP_CBC, 51012, 443, b, local(22,1,20), 0.05)
+    u = [("c2s", client_hello("update.windows.test"))]
+    for _ in range(3): u += [("s2c", app_data(random.randint(800,1200))), ("c2s", app_data(random.randint(100,200)))]
+    tls_flow(IP_WS, IP_UPD, 51120, 443, u, local(22,5,30), 0.06)
+    # the anomaly: outbound-heavy beacon
+    beacon = [("c2s", client_hello("cdn.exf-example.com")), ("s2c", app_data(64))]
+    for i in range(560):
+        beacon.append(("c2s", app_data(1460)))
+        if i % 40 == 39: beacon.append(("s2c", app_data(40)))
+    t0, t1 = local(22,7,14), local(22,18,0)
+    tls_flow(IP_WS, IP_BEACON, 49733, 443, beacon, t0, (t1-t0)/(len(beacon)+3))
+
+    pkts.sort(key=lambda p: p.time)
+    out = os.path.join(OUTDIR, "plateau_22h00_22h30.pcapng")
+    w = PcapNgWriter(out)
+    for p in pkts: w.write(p)
+    w.close()
+    return out, len(pkts), os.path.getsize(out)
+
+# --------------------------------------------------------------------------
+# PART B - the eight harmless decoy files (NO EICAR, nothing AV will flag)
+# --------------------------------------------------------------------------
+def build_files():
+    from docx import Document
+    from PIL import Image
+    DROP = epoch(2026,6,8,22,7,30)
+    html = (b"<!doctype html><html lang=en><head><meta charset=utf-8><title>Invoice</title></head><body>"
+            b"<!-- CYBER.SOHO TRAINING DECOY - DEFANGED. The base64 below is the plain ASCII string "
+            b"'BENIGN-LAB-DECOY-NO-PAYLOAD'. No smuggling logic, no Blob, no download, no script that runs. -->"
+            b"<h1>Outstanding invoice</h1><p>Harmless training artefact: hash it, identify its type, "
+            b"check the hash on VirusTotal. It is clean.</p>"
+            b"<p data-blob='QkVOSUdOLUxBQi1ERUNPWS1OTy1QQVlMT0FE'></p></body></html>")
+    notes = b"Marketing weekly sync\n- Q2 creative due Friday\n- newsletter cleanup pending\n(Benign training file.)\n"
+    pdfexe = b"BENIGN training stand-in. Double extension .pdf.exe but plain ASCII text, not an executable. Does nothing.\n"
+    svchost = b"BENIGN training stand-in. Borrows a system-binary name but is plain ASCII text in a user folder. Does nothing.\n"
+    setup = b"# BENIGN training decoy. Prints a line; no downloads, no registry, no network, no file changes.\nWrite-Host \"Cyber.SoHo lab decoy: harmless.\"\n"
+    instbin = b"Cyber.SoHo training stand-in named like an installer. Plain ASCII text, no code, completely harmless.\n"
+
+    Document(); doc = Document()
+    doc.add_heading("Q1 Marketing Report", level=1)
+    doc.add_paragraph("Benign training document swept up by the EDR. Ordinary Office file.")
+    doc.save(os.path.join(FILES, "Q1_report.docx"))
+    Image.new("RGB", (4,4), (120,120,120)).save(os.path.join(FILES, "photo_2026.jpg"), "JPEG")
+
+    spec = [
+        ("invoice_apr_2026.pdf.exe", pdfexe,  DROP, DROP),
+        ("Q1_report.docx",          None,     epoch(2026,6,2,16,40), epoch(2026,5,12,9,14)),
+        ("meeting_notes.txt",       notes,    epoch(2026,6,5,8,2),   epoch(2026,4,28,11,22)),
+        ("update_installer.bin",    instbin,  DROP, DROP),
+        ("invoice.html",            html,     DROP, DROP),
+        ("svchost.exe",             svchost,  DROP, DROP),
+        ("photo_2026.jpg",          None,     epoch(2026,5,30,19,5), epoch(2026,3,15,14,2)),
+        ("setup_helper.ps1",        setup,    DROP, DROP),
+    ]
+    out = []
+    for name, data, a, m in spec:
+        p = os.path.join(FILES, name)
+        if data is not None: open(p, "wb").write(data)
+        os.utime(p, (a, m))
+        out.append((name, os.path.getsize(p), hashlib.sha256(open(p,"rb").read()).hexdigest()))
+    return out
+
+# --------------------------------------------------------------------------
+# PART C - the synthetic DC01 Security log (CSV + JSON)
+# --------------------------------------------------------------------------
+def build_dc01():
+    rnd = random.Random(2026)
+    COMPUTER, ATTACKER = "DC01.plateau.local", "198.51.100.42"
+    ev = []
+    def add(dt, eid, entry, user, ip, lt, wks, status, msg):
+        ev.append({"TimeCreated": dt.isoformat(), "EventID": eid, "Channel": "Security",
+                   "Computer": COMPUTER, "EntryType": entry, "TargetUserName": user, "IpAddress": ip,
+                   "LogonType": lt, "WorkstationName": wks, "Status": status, "Message": msg})
+    USERS = ["jsmith","achen","mlevesque","rpatel","svc_print"]
+    HOST = {"jsmith":"10.30.0.21","achen":"10.30.0.22","mlevesque":"10.30.0.23","rpatel":"10.30.0.24","svc_print":"10.30.0.49"}
+    t = datetime(2026,6,8,21,55,0,tzinfo=EDT)
+    while t < datetime(2026,6,8,22,7,0,tzinfo=EDT):
+        if rnd.random() < 0.6:
+            u = rnd.choice(USERS); ip = HOST[u]
+            add(t, 4624, "SuccessAudit", u, ip, 3, u.upper()+"-PC", "0x0", f"Logon success. Account: {u}  LogonType: 3  Source: {ip}")
+        t += timedelta(seconds=rnd.randint(20,75))
+    users = ["Administrator"]*26 + ["administrator","admin","svc_backup","helpdesk","sa","backupadmin"]
+    rnd.shuffle(users)
+    for i in range(32):
+        sec = min(59, int(i*(59/31)))
+        dt = datetime(2026,6,8,22,7,sec, rnd.randint(0,999)*1000, tzinfo=EDT)
+        add(dt, 4625, "FailureAudit", users[i], ATTACKER, 3, "WORKSTATION", "0xC000006A",
+            f"Failed logon. Account: {users[i]}  LogonType: 3  Source: {ATTACKER}  AuthPkg: NTLM  SubStatus: 0xC000006A (bad password)")
+    t = datetime(2026,6,8,22,8,2,tzinfo=EDT)
+    for _ in range(4):
+        u = rnd.choice(USERS); ip = HOST[u]
+        add(t, 4624, "SuccessAudit", u, ip, 3, u.upper()+"-PC", "0x0", f"Logon success. Account: {u}  LogonType: 3  Source: {ip}")
+        t += timedelta(seconds=rnd.randint(8,20))
+    dt = datetime(2026,6,8,22,9,11,tzinfo=EDT)
+    add(dt, 4624, "SuccessAudit", "Administrator", ATTACKER, 3, "WORKSTATION", "0x0",
+        f"Logon success. Account: Administrator  LogonType: 3  Source: {ATTACKER}  AuthPkg: NTLM")
+    add(dt+timedelta(seconds=1), 4672, "SuccessAudit", "Administrator", ATTACKER, 3, "WORKSTATION", "0x0",
+        "Special privileges assigned. Account: Administrator  Privileges: SeDebugPrivilege, SeBackupPrivilege")
+    t = datetime(2026,6,8,22,10,0,tzinfo=EDT)
+    while t < datetime(2026,6,8,22,30,0,tzinfo=EDT):
+        if rnd.random() < 0.5:
+            u = rnd.choice(USERS); ip = HOST[u]
+            add(t, 4624, "SuccessAudit", u, ip, 3, u.upper()+"-PC", "0x0", f"Logon success. Account: {u}  LogonType: 3  Source: {ip}")
+        t += timedelta(seconds=rnd.randint(30,90))
+    ev.sort(key=lambda e: e["TimeCreated"])
+    fields = ["TimeCreated","EventID","Channel","Computer","EntryType","TargetUserName","IpAddress","LogonType","WorkstationName","Status","Message"]
+    with open(os.path.join(OUTDIR,"dc01_security_events.csv"),"w",newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=fields); w.writeheader()
+        for e in ev: w.writerow(e)
+    json.dump(ev, open(os.path.join(OUTDIR,"dc01_security_events.json"),"w"), indent=2)
+    n4625 = sum(1 for e in ev if e["EventID"]==4625)
+    return len(ev), n4625
+
+if __name__ == "__main__":
+    print("Building your Lab 4 evidence (all synthetic / harmless)...\n")
+    po, pn, ps = build_pcap()
+    print(f"[1/3] capture : {po}  ({pn} packets, {ps/1024:.0f} KiB)")
+    fl = build_files()
+    print(f"[2/3] files   : {FILES}  ({len(fl)} harmless decoys)")
+    for n, s, h in fl: print(f"        {n:26} {s:>6}B  sha256={h[:16]}...")
+    en, n4625 = build_dc01()
+    print(f"[3/3] DC log  : {OUTDIR}/dc01_security_events.csv + .json  ({en} events, {n4625} x 4625)")
+    print("\nDone. Nothing here is real malware. See the manual for what to expect from your antivirus,")
+    print("and for the optional VirusTotal-by-hash exercise.")
+</textarea></div>
+
+  <h3>2b. Run it</h3>
+  <pre class="term">python3 build_lab4_evidence.py</pre>
+  <p>You should see three lines confirming the capture, the eight decoy files, and the log. Take a quick look at what landed:</p>
+  <pre class="term">ls -la lab4_evidence lab4_evidence/suspicious_files
+file lab4_evidence/suspicious_files/*</pre>
+  <p>Notice that <code>file</code> calls <code>invoice_apr_2026.pdf.exe</code> and <code>svchost.exe</code> plain <em>ASCII text</em>, not programs. That mismatch between the name and the real content is the first thing a triage analyst writes down. Notice too that five of the decoys share the exact same modify time (22:07:30) - ordinary files are never all touched in the same second, and that cluster is your "these were dropped together" signal.</p>
+
+  <div class="callout calm">
+    <h4>A note on Linux timestamps</h4>
+    <p>If you run <code>stat</code> after you have already opened a file, the <em>access</em> time will read as "now" - that is just Linux updating it as you look. Lean on the shared <em>modify</em> time across the five decoys for the dropper pattern on Linux, and on the Born-time cluster you will set on Windows in section 3.</p>
+  </div>
+
+  <h3>2c. (Windows only) make the log openable in Event Viewer</h3>
+  <p>The Python step gives you the log as a CSV and a JSON, which is enough to start. To do the Event Viewer half of Lane 3, copy your <code>lab4_evidence</code> folder to the Windows analyst VM, then run this once in an <strong>elevated Windows PowerShell 5.1</strong> window from the folder that holds it. It stages the rows in a throwaway log and exports a real <code>dc01_security.evtx</code>:</p>
+  <div class="code"><div class="codebar"><span class="fn">make_evtx.ps1</span><button class="copy">Copy</button></div><textarea class="src" rows="14" readonly># Cyber.SoHo - turn your CSV into a real dc01_security.evtx (Windows analyst VM).
+# Run ONCE in an ELEVATED Windows PowerShell 5.1 window, from the folder that holds
+# your lab4_evidence\ directory. The genuine Security channel is locked down, so we
+# stage the synthetic rows in a private classic log and export that to .evtx - Event
+# Viewer opens it fine via Action -> Open Saved Log.
+param(
+  [string]$Csv = ".\lab4_evidence\dc01_security_events.csv",
+  [string]$Out = ".\lab4_evidence\dc01_security.evtx",
+  [string]$LogName = "DC01-Security-Lab",
+  [string]$Source  = "PlateauLabGen"
+)
+$ErrorActionPreference = "Stop"
+if (-not (Test-Path $Csv)) { throw "CSV not found: $Csv  (run the Python builder first)" }
+if ([System.Diagnostics.EventLog]::SourceExists($Source)) { Remove-EventLog -Source $Source }
+if ([System.Diagnostics.EventLog]::Exists($LogName))       { Remove-EventLog -LogName $LogName }
+New-EventLog -LogName $LogName -Source $Source
+Limit-EventLog -LogName $LogName -MaximumSize 20MB -OverflowAction OverwriteAsNeeded
+foreach ($r in (Import-Csv $Csv)) {
+  $eid  = [int]$r.EventID
+  $type = if ($eid -eq 4625) { 'Warning' } else { 'Information' }
+  $msg  = "[$($r.TimeCreated)] EventID $eid  Computer=$($r.Computer)`r`n$($r.Message)`r`nAccount=$($r.TargetUserName)  SourceIp=$($r.IpAddress)  LogonType=$($r.LogonType)  Status=$($r.Status)"
+  Write-EventLog -LogName $LogName -Source $Source -EventId $eid -EntryType $type -Message $msg
+}
+if (Test-Path $Out) { Remove-Item $Out -Force }
+wevtutil epl $LogName $Out
+Remove-EventLog -LogName $LogName
+Write-Host "Wrote $Out. Open it in Event Viewer (Action -> Open Saved Log)."
+Write-Host "Then bucket the burst with L2_hunt_4625.ps1 -Path $Out (or point it at the .csv)."
+</textarea></div>
+</section>
+
+<section id="evtx">
+  <h2><span class="num">3.</span>(Windows only) put the file timestamps back</h2>
+  <p>Copying files onto a Windows share resets their creation time to the moment they arrived, which quietly erases the timeline you just built. Run this small script from the folder holding <code>lab4_evidence</code> to restore it - five decoys stamped as if dropped together at 22:07:30, three ordinary files with believable, spread-out histories:</p>
+  <div class="code"><div class="codebar"><span class="fn">set_timestamps.ps1</span><button class="copy">Copy</button></div><textarea class="src" rows="14" readonly># Cyber.SoHo - restore the file timestamps on Windows (analyst VM).
+# When files land on NTFS they get a fresh Creation time (= copy time), which wipes the
+# story. Run this from the folder that holds lab4_evidence\ to put it back: five decoys
+# that all look "dropped" at the same instant, three ordinary files with spread histories.
+$ErrorActionPreference = "Stop"
+$folder = ".\lab4_evidence\suspicious_files"
+$dropper = "2026-06-08T22:07:30-04:00"
+$dropFiles = "invoice_apr_2026.pdf.exe","update_installer.bin","invoice.html","svchost.exe","setup_helper.ps1"
+$controls = @{
+  "Q1_report.docx"    = @("2026-05-09T09:14:00-04:00","2026-05-12T09:14:00-04:00","2026-06-02T16:40:00-04:00")
+  "meeting_notes.txt" = @("2026-04-25T11:22:00-04:00","2026-04-28T11:22:00-04:00","2026-06-05T08:02:00-04:00")
+  "photo_2026.jpg"    = @("2026-03-12T14:02:00-04:00","2026-03-15T14:02:00-04:00","2026-05-30T19:05:00-04:00")
+}
+foreach ($f in $dropFiles) {
+  $p = Join-Path $folder $f
+  if (Test-Path -LiteralPath $p) {
+    $t = [datetime]::Parse($dropper)
+    $i = Get-Item -LiteralPath $p
+    $i.CreationTime = $t; $i.LastWriteTime = $t; $i.LastAccessTime = $t
+    "dropper MAC-B set on $f"
+  }
+}
+foreach ($k in $controls.Keys) {
+  $p = Join-Path $folder $k
+  if (Test-Path -LiteralPath $p) {
+    $i = Get-Item -LiteralPath $p
+    $i.CreationTime   = [datetime]::Parse($controls[$k][0])
+    $i.LastWriteTime  = [datetime]::Parse($controls[$k][1])
+    $i.LastAccessTime = [datetime]::Parse($controls[$k][2])
+    "control MAC-B set on $k"
+  }
+}
+"Done. The five decoys share Born = Modified = Accessed at 22:07:30; the three controls are spread out."
+</textarea></div>
+  <p>Now <code>L2_file_triage.ps1</code> will show Born = Modified = Accessed all bunched at 22:07:30 on the five decoys - the textbook dropper signature - while the three controls look like normal documents from earlier in the year.</p>
+</section>
+
+<section id="vt">
+  <h2><span class="num">4.</span>The VirusTotal step - what does "malicious" actually look like?</h2>
+  <p>Lane 2 asks you to look a file's hash up on VirusTotal and read the verdict. Here is the honest situation: <strong>none of your eight decoys is malicious</strong>, so every hash you submit from them will come back clean. That is a real result and worth writing down - "quarantined" never means "confirmed bad", and a good chunk of triage is clearing files, not condemning them.</p>
+  <p>But you should also see what a genuine detection looks like, without ever putting a real sample on your machine. The safe, industry-standard way to do that is to look up a <em>hash</em> - a 64-character fingerprint is just text and cannot run anything. Use the fingerprint of the well-known antivirus test file (the EICAR test file - read about it at <a href="https://www.eicar.org/download-anti-malware-testfile/">eicar.org</a>). Paste this into the search box at <a href="https://www.virustotal.com/gui/home/search">virustotal.com/gui/home/search</a>:</p>
+  <pre class="term">275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f</pre>
+  <p>You will see roughly sixty engines flag it, with a tidy verdict like <code>EICAR-Test-File</code>. Screenshot that for your report as your example of a malicious verdict, and contrast it with the clean result from one of your own files. You never downloaded or created the sample - you only asked a database a question, which is exactly the habit this lab is trying to build. <strong>Always look up the hash; never upload the file.</strong></p>
+</section>
+
+<section id="av">
+  <h2><span class="num">5.</span>If your antivirus gets nervous</h2>
+  <p>This kit is built to slip past a normal scan, so most of you will see nothing. If your endpoint agent is the jumpy sort and quarantines a decoy anyway, do not panic and do not assume something is wrong - it is reacting to a name or a shape, not to real code. Add a folder exclusion for your lab directory and carry on.</p>
+  <p><strong>Microsoft Defender:</strong> Windows Security &rarr; Virus &amp; threat protection &rarr; Manage settings &rarr; Add or remove exclusions &rarr; Add an exclusion &rarr; Folder &rarr; pick your <code>lab4_evidence\suspicious_files</code> folder. Or, from an elevated PowerShell:</p>
+  <pre class="term">Add-MpPreference -ExclusionPath "$HOME\cohort-cyb01\lab4\lab4_evidence\suspicious_files"</pre>
+  <p>If a file already got pulled into quarantine, restore it from Windows Security &rarr; Protection history. On Linux, ClamAV and friends will not touch these at all. If anything ever genuinely worries you, stop and message the instructor before going further - that instinct is the right one to keep.</p>
+</section>
+
+<section id="check">
+  <h2><span class="num">6.</span>Did it work? Quick self-check</h2>
+  <p>Before you start the real triage, confirm your build matches what everyone else has. If a row does not line up, re-run the builder.</p>
+  <table>
+    <thead><tr><th>Lane</th><th>What you should see</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr><td>Network</td><td>One outbound-heavy flow <code>10.30.0.14 &rarr; 203.0.113.66:443</code> (SNI <code>cdn.exf-example.com</code>), roughly 800 KB up versus a few hundred bytes down, bunched between 22:07 and 22:18. The filters <code>dns</code>, <code>tls.handshake.type==1</code>, <code>icmp</code>, <code>arp</code> all return packets; <code>ntp</code> / <code>mdns</code> is your "surprise" row.</td><td><span class="pill ok">benign data</span></td></tr>
+      <tr><td>Files</td><td>Eight files. Five share a 22:07:30 modify time (the "dropped together" cluster); <code>.pdf.exe</code> and <code>svchost.exe</code> are text, not programs; <code>Q1_report.docx</code>, <code>meeting_notes.txt</code>, <code>photo_2026.jpg</code> look like ordinary older files. Every hash is clean on VirusTotal.</td><td><span class="pill ok">all harmless</span></td></tr>
+      <tr><td>Logs</td><td>32 &times; Event ID 4625 (failed logon) inside the 22:07 minute, all from <code>198.51.100.42</code>, then a single Event ID 4624 (success) from that same address at 22:09:11. That is the brute-force-then-success shape.</td><td><span class="pill ok">synthetic log</span></td></tr>
+      <tr><td>VirusTotal</td><td>Your own files: clean. The EICAR test hash from section 4: flagged by many engines. The contrast is the lesson.</td><td><span class="pill bad">demo only</span></td></tr>
+    </tbody>
+  </table>
+  <p>From here, follow the Lab 4 brief exactly as written - the three lanes, the correlation table, the conclusion. The evidence is yours now; go read it like an analyst.</p>
+</section>
+
+<section id="legal" class="disc">
+  <h2><span class="num">7.</span>Terms, safety, and liability - read before you build</h2>
+
+  <h3>What this material is</h3>
+  <p>This is an authorised teaching supplement for cohort CYB-01 of course 420-D01-AB. Every artefact it tells you to generate is <strong>synthetic and benign</strong>: there is no malware, no working exploit, no real network traffic, no genuine credential, and no real personal data anywhere in it. The scenario, the company, the IP addresses (all drawn from the reserved documentation ranges of RFC 5737), the accounts, and the events are invented for instruction only. The tools you exercise - Wireshark, the triage helpers, Event Viewer - are standard defensive instruments.</p>
+
+  <h3>You build it yourself, on a machine you own or are authorised to use</h3>
+  <p>You are choosing to run these scripts on your own isolated lab virtual machine. Do so only there - never on a personal, employer, school, or shared device, and never on any network you do not own or have written permission to use. By generating, opening, copying, or analysing any file produced from this supplement, you confirm that you have read and accepted these terms and that you are acting within an authorised, isolated lab.</p>
+
+  <h3>Antivirus behaviour is expected and is not evidence of harm</h3>
+  <p>Security software exists to react to suspicious names, shapes, and well-known test artefacts. If your antivirus flags, quarantines, or deletes any decoy in this kit, that is a false positive against deliberately harmless material - it is not an indication that the file is dangerous, that your system is compromised, or that anyone has acted against you. Handle it with the ordinary exclusion steps in section 5.</p>
+
+  <h3>Liability and indemnity</h3>
+  <p>The author, Cyber.SoHo Educational Hub, and the course instructor provide this supplement for educational use only and accept no liability whatsoever for any direct, indirect, incidental, consequential, or other loss, damage, downtime, data loss, disciplinary or legal consequence, or third-party complaint arising from a reader's use, misuse, attempted use, adaptation, or misconfiguration of any script, command, file, or recommendation contained here, or from any deviation from the procedure described. The reader accepts full and sole responsibility for the lawful, ethical, and isolated use of everything in this document. Nothing here authorises you to test, scan, or attack any system you do not own or have explicit written permission to assess.</p>
+
+  <h3>Lawful use only</h3>
+  <p>The skills practised here are strictly for defensive, lawful, authorised work. Using comparable techniques against systems you are not authorised to test is a criminal offence under, among others, the Canadian Criminal Code s.342.1 (unauthorised use of a computer), the United States Computer Fraud and Abuse Act (18 U.S.C. &sect; 1030), EU Directive 2013/40/EU on attacks against information systems, and Spain's Ley Org&aacute;nica 10/1995 del C&oacute;digo Penal. Conduct yourself in line with the <a href="https://www.acm.org/code-of-ethics">ACM</a> and <a href="https://www.ieee.org/about/corporate/governance/p7-8.html">IEEE</a> codes of ethics. If you are ever unsure whether an action is authorised, ask the instructor before you take it.</p>
+
+  <h3>Independent educational brand</h3>
+  <p>Cyber.SoHo Educational Hub is an independent educational brand and the sole creator and owner of this material. No affiliation with, or endorsement by, any college, university, employer, vendor, or other organisation is stated, intended, or to be inferred from any name, course code, cohort identifier, or hyperlink used here. External names and links are pedagogical pointers, not endorsements; verify any external URL through a reputation service before you click it.</p>
+</section>
+
+<footer>
+  &copy; 2026 Cyber.SoHo Educational Hub. ALL Rights Reserverd.
+  <div class="tag">From the Industry to the Classroom - Building the IT's Future, Today and Together!</div>
+</footer>
+</div>
+
+<button class="totop" id="totop" aria-label="Back to top">&uarr;</button>
+<script>
+  var prog=document.getElementById("prog"), totop=document.getElementById("totop");
+  function onScroll(){
+    var h=document.documentElement, max=(h.scrollHeight-h.clientHeight)||1;
+    var pct=(h.scrollTop/max)*100;
+    prog.style.width=pct+"%";
+    if(h.scrollTop>500){totop.classList.add("show");}else{totop.classList.remove("show");}
+  }
+  document.addEventListener("scroll",onScroll,{passive:true}); onScroll();
+  totop.addEventListener("click",function(){window.scrollTo({top:0,behavior:"smooth"});});
+  document.querySelectorAll(".codebar button").forEach(function(b){
+    b.addEventListener("click",function(){
+      var ta=b.closest(".code").querySelector("textarea");
+      ta.select(); ta.setSelectionRange(0,ta.value.length);
+      var ok=false;
+      try{ if(navigator.clipboard){navigator.clipboard.writeText(ta.value);ok=true;} }catch(e){}
+      if(!ok){ try{document.execCommand("copy");}catch(e){} }
+      var t=b.textContent; b.textContent="Copied"; setTimeout(function(){b.textContent=t;},1200);
+      window.getSelection&&window.getSelection().removeAllRanges();
+    });
+  });
+</script>
+</body>
+</html>
