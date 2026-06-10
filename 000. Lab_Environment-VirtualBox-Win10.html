@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CYB-01 — VirtualBox Lab Build &amp; Snapshot Reference</title>
+<style>
+  :root{
+    --paper:#FAF7F2;
+    --card:#FFFDF8;
+    --teal:#0E7C7B;
+    --teal-dark:#0A5E5D;
+    --rust:#B5440C;
+    --ink:#1F2E2D;
+    --ink-soft:#4C5B5A;
+    --line:#E4DDCD;
+    --line-strong:#D2C9B4;
+    --code-bg:#14201F;
+    --code-ink:#EDEAE0;
+    --code-soft:#8FB7B5;
+    --warn-bg:#FBEFE6;
+    --good-bg:#EAF3F0;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Noto Sans",sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:16px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 20px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:42px 0 26px}
+  .wm{font-weight:800;font-size:1.05rem;letter-spacing:-.01em;margin-bottom:18px}
+  .wm-a{color:var(--teal)}
+  .wm-b{color:var(--rust)}
+  .hero h1{font-size:2.1rem;line-height:1.18;margin:.1em 0 .25em;letter-spacing:-.015em}
+  .hero .meta{color:var(--ink-soft);font-size:.95rem;margin:0 0 .5em}
+  .hero .lede{font-size:1.06rem;color:var(--ink);max-width:62ch;margin:.7em 0 1.1em}
+  .badges{display:flex;flex-wrap:wrap;gap:8px}
+  .badge{font-size:.82rem;font-weight:600;padding:5px 11px;border-radius:999px;
+    background:var(--good-bg);color:var(--teal-dark);border:1px solid var(--line-strong)}
+  .badge.swap{background:var(--warn-bg);color:var(--rust);border-color:#EBD4C2}
+
+  /* ---------- sticky nav ---------- */
+  nav.bar{position:sticky;top:0;z-index:60;background:var(--teal);
+    box-shadow:0 2px 0 rgba(0,0,0,.06)}
+  nav.bar .scroller{display:flex;gap:4px;overflow-x:auto;white-space:nowrap;
+    padding:9px 20px;max-width:980px;margin:0 auto;scrollbar-width:thin}
+  nav.bar a{color:#E7F2F0;text-decoration:none;font-size:.86rem;font-weight:600;
+    padding:6px 11px;border-radius:7px;flex:0 0 auto;opacity:.85}
+  nav.bar a:hover{background:rgba(255,255,255,.12);opacity:1}
+  nav.bar a.active{background:var(--paper);color:var(--teal-dark);opacity:1}
+
+  main{padding:26px 0 60px}
+
+  /* ---------- cards ---------- */
+  section{scroll-margin-top:64px;margin:0 0 16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    overflow:hidden;box-shadow:0 1px 2px rgba(31,46,45,.04)}
+  .card-head{all:unset;display:flex;align-items:center;justify-content:space-between;
+    width:100%;cursor:pointer;padding:18px 22px;box-sizing:border-box;
+    border-left:4px solid var(--teal)}
+  .card-head:hover{background:#FBF8F1}
+  .card-head-title{font-size:1.18rem;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+  .card-head .n{color:var(--teal);font-weight:800;margin-right:10px;font-variant-numeric:tabular-nums}
+  .chev{color:var(--teal);font-size:1.1rem;transition:transform .22s ease}
+  .card.collapsed .chev{transform:rotate(-90deg)}
+  .card-body-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .24s ease}
+  .card.collapsed .card-body-wrap{grid-template-rows:0fr}
+  .card-body{overflow:clip}
+  .card-inner{padding:4px 22px 24px}
+
+  h3{font-size:1.02rem;margin:22px 0 6px;color:var(--teal-dark);letter-spacing:-.005em}
+  h3:first-child{margin-top:8px}
+  p{margin:.55em 0}
+  a.link{color:var(--teal-dark);text-decoration:underline;text-underline-offset:2px;font-weight:600}
+  a.link:hover{color:var(--rust)}
+  strong{font-weight:700}
+  ul,ol{margin:.5em 0;padding-left:1.25em}
+  li{margin:.32em 0}
+  .muted{color:var(--ink-soft)}
+  .lead-step{counter-reset:none}
+
+  /* callouts */
+  .note{border-radius:10px;padding:12px 15px;margin:14px 0;font-size:.95rem;border:1px solid}
+  .note.warn{background:var(--warn-bg);border-color:#EAD3C1}
+  .note.warn b{color:var(--rust)}
+  .note.tip{background:var(--good-bg);border-color:#CFE3DD}
+  .note.tip b{color:var(--teal-dark)}
+
+  /* table */
+  .tbl-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:10px}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:#F3EEE3;color:var(--teal-dark);font-weight:700;border-bottom:2px solid var(--line-strong)}
+  tbody tr:last-child td{border-bottom:none}
+  td.opt{color:var(--ink-soft)}
+  .mono-sm{font-family:var(--mono);font-size:.85em}
+
+  /* code */
+  pre{position:relative;background:var(--code-bg);color:var(--code-ink);border-radius:10px;
+    padding:14px 16px;padding-top:30px;overflow-x:auto;margin:12px 0;font-size:.86rem;line-height:1.55}
+  pre code{font-family:var(--mono);white-space:pre}
+  code.inl{font-family:var(--mono);background:#EFEADF;color:var(--rust);
+    padding:1px 6px;border-radius:5px;font-size:.86em}
+  button.copy{position:absolute;top:7px;right:8px;font-family:var(--sans);font-size:.72rem;
+    font-weight:600;color:var(--code-soft);background:transparent;border:1px solid #2C4140;
+    border-radius:6px;padding:3px 9px;cursor:pointer}
+  button.copy:hover{color:var(--code-ink);border-color:#3E5957}
+
+  /* ip map */
+  .ipmap{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:12px 0;
+    background:#F3EEE3;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .ipmap .ip{font-family:var(--mono);font-size:.86rem;color:var(--rust);font-weight:600;white-space:nowrap}
+  .ipmap .who{font-size:.93rem}
+
+  /* checklist */
+  .chk{list-style:none;padding:0;margin:14px 0}
+  .chk li{display:flex;gap:11px;align-items:flex-start;padding:11px 13px;margin:8px 0;
+    background:#F7F3EA;border:1px solid var(--line);border-radius:10px;cursor:pointer}
+  .chk input{margin-top:3px;width:17px;height:17px;accent-color:var(--teal);flex:0 0 auto;cursor:pointer}
+  .chk .snap{font-family:var(--mono);font-size:.84rem;color:var(--teal-dark);font-weight:700}
+  .chk .desc{font-size:.92rem}
+  .chk li.done{opacity:.55}
+  .chk li.done .desc{text-decoration:line-through}
+
+  /* fab */
+  #fab{position:fixed;right:16px;bottom:16px;z-index:70;display:flex;align-items:center;gap:2px;
+    background:var(--teal);color:var(--paper);border-radius:999px;padding:6px 6px 6px 14px;
+    box-shadow:0 6px 20px rgba(14,124,123,.35);font-size:.8rem;max-width:78vw}
+  #fab-label{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw;opacity:.92}
+  #fab-fold{all:unset;cursor:pointer;font-weight:700;font-size:.78rem;background:rgba(255,255,255,.16);
+    padding:6px 12px;border-radius:999px;white-space:nowrap}
+  #fab-fold:hover{background:rgba(255,255,255,.28)}
+
+  /* legal + footer */
+  .legal{font-size:.88rem;color:var(--ink-soft)}
+  .legal b{color:var(--ink)}
+  footer{border-top:1px solid var(--line);padding:24px 0 50px;text-align:center;
+    color:var(--ink-soft);font-size:.85rem;line-height:1.7}
+  footer .tag{color:var(--teal-dark);font-weight:600}
+
+  @media(max-width:620px){
+    .hero h1{font-size:1.7rem}
+    .card-inner{padding:4px 16px 20px}
+    .card-head{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <!-- Swap this CSS wordmark for your canonical cyber_soho.png (JPEG) embedded as data:image/jpeg;base64 -->
+    <div class="wm"><span class="wm-a">Cyber</span><span class="wm-b">.SoHo</span> &nbsp;Educational&nbsp;Hub</div>
+    <h1>VirtualBox Lab — Build &amp; Snapshot Reference</h1>
+    <p class="meta">Course 420-D01-AB &middot; Preventive Surveillance in Cybersecurity &middot; Cohort CYB-01</p>
+    <p class="lede">One host, six labs. This is everything you install once on the classroom laptop to carry CYB-01 from Lab&nbsp;1 through Lab&nbsp;6 — with the firewall, Linux, and analyst swaps already folded in.</p>
+    <div class="badges">
+      <span class="badge">Host: Windows 10 &middot; 32&nbsp;GB RAM</span>
+      <span class="badge swap">Firewall &rarr; pfSense</span>
+      <span class="badge swap">Linux &rarr; Debian</span>
+      <span class="badge swap">Analyst &rarr; Parrot OS</span>
+    </div>
+  </div>
+</header>
+
+<nav class="bar">
+  <div class="scroller">
+    <a href="#host">Before you start</a>
+    <a href="#roster">VM roster</a>
+    <a href="#software">Software per VM</a>
+    <a href="#hostsw">Host-side tools</a>
+    <a href="#network">Network model</a>
+    <a href="#swaps">The three swaps</a>
+    <a href="#snapshots">Snapshots</a>
+    <a href="#perf">Old-Dell tuning</a>
+    <a href="#legal">Legal &amp; safety</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+  <!-- 1 -->
+  <section id="host">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">1</span>Before you start (host prep)</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <p>The 32&nbsp;GB of memory is generous — the original briefs assume 8&ndash;16&nbsp;GB. On an eight-year-old machine the two things that actually bite are <strong>disk</strong> and <strong>CPU contention</strong> (both covered under Old-Dell tuning), and there is exactly one host setting that can quietly wreck performance.</p>
+
+        <h3>Turn off every competing hypervisor first</h3>
+        <p>Hyper-V, Virtual Machine Platform, Windows Subsystem for Linux&nbsp;2 (WSL2), Windows Sandbox, and <em>Core Isolation &rarr; Memory Integrity</em> each seize the processor's virtualization extensions and force <a class="link" href="https://www.virtualbox.org" target="_blank" rel="noopener">Oracle VirtualBox</a> into slow software emulation. On this class of laptop that is the difference between usable and unusable.</p>
+        <ul>
+          <li>Open <em>Turn Windows features on or off</em> and untick Hyper-V, Virtual Machine Platform, Windows Sandbox, and the Windows Subsystem for Linux.</li>
+          <li><em>Settings &rarr; Privacy &amp; security &rarr; Windows Security &rarr; Device security &rarr; Core isolation</em> &rarr; turn <strong>Memory integrity off</strong>.</li>
+          <li>If VirtualBox still warns about another hypervisor, force it off and reboot:</li>
+        </ul>
+<pre><code># Admin PowerShell — only if VirtualBox still complains:
+bcdedit /set hypervisorlaunchtype off
+# then reboot</code></pre>
+
+        <h3>Confirm virtualization is enabled, then install the host tools</h3>
+        <p>Reboot into BIOS/UEFI and enable Intel VT-x or AMD-V. Verify it took:</p>
+<pre><code>systeminfo | findstr /i "Hyper-V Requirements"
+# or: Task Manager -> Performance -> CPU -> "Virtualization: Enabled"</code></pre>
+        <p>Then install <a class="link" href="https://www.virtualbox.org/wiki/Downloads" target="_blank" rel="noopener">VirtualBox</a> plus the matching <strong>Extension Pack</strong> (same version number), and <a class="link" href="https://www.gns3.com/software/download" target="_blank" rel="noopener">GNS3</a> — the Graphical Network Simulator-3. Both are listed under Host-side tools.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section id="roster">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">2</span>The VM roster (swaps applied)</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <p>Six Virtual Machines (VMs) plus two optional extras. The same set carries every lab — the briefs just rename them (<code class="inl">cyb01-*</code> in Lab&nbsp;3, <code class="inl">CYB01-*-01</code> in Labs&nbsp;4&ndash;5).</p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Machine</th><th>OS / image</th><th>RAM</th><th>Disk</th><th>What it&rsquo;s for</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Firewall</strong></td>
+              <td><a class="link" href="https://www.pfsense.org/download/" target="_blank" rel="noopener">pfSense CE</a> (FreeBSD)</td>
+              <td>2&nbsp;GB</td><td>25&nbsp;GB</td>
+              <td>Routed gateway for the lab net; SNMP source; syslog target; web GUI on <span class="mono-sm">https://10.10.10.1</span>. Labs&nbsp;2&ndash;5.</td>
+            </tr>
+            <tr>
+              <td><strong>Sensor / monitoring</strong></td>
+              <td><a class="link" href="https://www.debian.org/distrib/" target="_blank" rel="noopener">Debian 12 (bookworm)</a></td>
+              <td><strong>8&nbsp;GB</strong></td><td>50&ndash;60&nbsp;GB</td>
+              <td>The workhorse: Wireshark, SNMP tools, <a class="link" href="https://wazuh.com" target="_blank" rel="noopener">Wazuh</a> all-in-one, <a class="link" href="https://www.splunk.com" target="_blank" rel="noopener">Splunk</a>. Labs&nbsp;1&ndash;6.</td>
+            </tr>
+            <tr>
+              <td><strong>Target / endpoint</strong></td>
+              <td><a class="link" href="https://www.microsoft.com/en-us/evalcenter/" target="_blank" rel="noopener">Windows 10/11 Evaluation</a></td>
+              <td>4&nbsp;GB</td><td>60&nbsp;GB</td>
+              <td>Sysmon (System Monitor) + Wazuh agent + the attack range. Labs&nbsp;2&ndash;5.</td>
+            </tr>
+            <tr>
+              <td><strong>Analyst</strong></td>
+              <td><a class="link" href="https://www.parrotsec.org/download/" target="_blank" rel="noopener">Parrot OS Security</a></td>
+              <td>4&nbsp;GB</td><td>40&nbsp;GB</td>
+              <td>Wireshark + Nmap pre-installed; SPAN capture host. Labs&nbsp;1&ndash;3.</td>
+            </tr>
+            <tr>
+              <td class="opt"><em>(optional)</em> 2nd target</td>
+              <td class="opt">Windows linked clone</td>
+              <td class="opt">4&nbsp;GB</td><td class="opt">40&ndash;60&nbsp;GB</td>
+              <td class="opt">Lateral-movement destination in Lab&nbsp;5 (WS-014&nbsp;&rarr;&nbsp;WS-022).</td>
+            </tr>
+            <tr>
+              <td class="opt"><em>(optional)</em> GNS3 VM</td>
+              <td class="opt">GNS3 appliance (OVA)</td>
+              <td class="opt">3&nbsp;GB</td><td class="opt">20&nbsp;GB</td>
+              <td class="opt">Topology + the Switched Port Analyzer (SPAN) mirror feed for Lab&nbsp;3.</td>
+            </tr>
+          </tbody>
+        </table>
+        </div>
+        <p class="muted">Four real OS installs (Debian, Windows, Parrot, pfSense) plus two appliances/clones. Labs&nbsp;1 and 6 add no new VMs — Lab&nbsp;1 is offline capture/log analysis on one Linux box, and Lab&nbsp;6 is Python plus the workbook and HTML files, run on the sensor and the Windows VMs you already have.</p>
+        <div class="note tip"><b>Why Debian 12 and not 13 for the sensor?</b> Wazuh 4.7&rsquo;s officially-supported matrix lists Debian 10/11/12. The lighter hosts can run Debian 13 — see The three swaps.</div>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section id="software">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">3</span>Software inside each VM</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+
+        <h3>Debian sensor &mdash; the box that does the heavy lifting</h3>
+        <p>Wireshark + tshark &middot; the Net-SNMP suite + <code class="inl">snmp-mibs-downloader</code> &middot; Wazuh 4.7 all-in-one (server + indexer/OpenSearch + dashboard) &middot; Splunk Free 9.x &middot; Python&nbsp;3 with PyYAML and your helper scripts &middot; <a class="link" href="https://learn.microsoft.com/en-us/powershell/" target="_blank" rel="noopener">PowerShell (pwsh)</a> for the Lab&nbsp;2 <code class="inl">.ps1</code> scripts &middot; <a class="link" href="https://graphviz.org" target="_blank" rel="noopener">Graphviz</a> (<code class="inl">dot</code>) for the three-view rendering &middot; pandoc (optional, Lab&nbsp;5 one-pager).</p>
+<pre><code># Enable contrib + non-free first (needed for snmp-mibs-downloader):
+#   deb822 format -> edit /etc/apt/sources.list.d/debian.sources
+#     Components: main contrib non-free non-free-firmware
+#   classic format -> append 'contrib non-free' to each deb line in /etc/apt/sources.list
+sudo apt update
+sudo apt install -y wireshark tshark snmp snmp-mibs-downloader \
+                    graphviz python3 python3-yaml
+# PowerShell: add Microsoft's apt repo per their docs, then:
+sudo apt install -y powershell</code></pre>
+<pre><code># Wazuh — bump THIS VM to 8 GB RAM first, or the indexer crashes the install:
+curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+sudo bash ./wazuh-install.sh -a
+# If the OS check rejects the Debian version, re-run with:
+sudo bash ./wazuh-install.sh -a --ignore-check</code></pre>
+<pre><code># Splunk Free — register + download the .deb from splunk.com, verify its SHA-256, then:
+sudo dpkg -i splunk-9.x.x-amd64.deb
+sudo /opt/splunk/bin/splunk start --accept-license
+sudo /opt/splunk/bin/splunk enable boot-start
+# After the one Wazuh -> Splunk forwarding exercise, reclaim CPU/RAM:
+sudo /opt/splunk/bin/splunk stop</code></pre>
+
+        <h3>Windows target</h3>
+        <p>Sysmon (with a real config &mdash; SwiftOnSecurity or sysmon-modular, both named in your Lab&nbsp;5 alt-tools) &middot; the Wazuh agent (MSI generated by the dashboard) &middot; PowerShell&nbsp;5.1 and Event Viewer are already built in. A browser plus Npcap/Wireshark only if a student wants to capture on Windows.</p>
+
+        <h3>Parrot analyst</h3>
+        <p>Wireshark and Nmap ship with it &mdash; nothing else required.</p>
+
+        <h3>pfSense firewall</h3>
+        <p>No add-ons. You enable the SNMP service and add the remote syslog target through the web GUI &mdash; the exact menu paths are in The three swaps.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section id="hostsw">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">4</span>Host-side tools (on the Dell itself)</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <ul>
+          <li><a class="link" href="https://www.virtualbox.org/wiki/Downloads" target="_blank" rel="noopener">VirtualBox</a> + the matching <strong>Extension Pack</strong>.</li>
+          <li><a class="link" href="https://www.gns3.com/software/download" target="_blank" rel="noopener">GNS3 (all-in-one)</a> &mdash; then import the GNS3 VM OVA into VirtualBox.</li>
+          <li>A browser &mdash; for <a class="link" href="https://www.virustotal.com" target="_blank" rel="noopener">VirusTotal</a>, <a class="link" href="https://gchq.github.io/CyberChef/" target="_blank" rel="noopener">CyberChef</a>, the <a class="link" href="https://attack.mitre.org" target="_blank" rel="noopener">MITRE ATT&amp;CK</a> Navigator, <a class="link" href="https://www.drawio.com" target="_blank" rel="noopener">draw.io</a>, the HTML lab modules, and the cloud console.</li>
+          <li>The built-in OpenSSH client (Windows 10) or PuTTY &mdash; for the cloud EC2 box and VM shells.</li>
+          <li>Wireshark on the host (optional) &mdash; to open <code class="inl">.pcapng</code> files copied off the sensor.</li>
+        </ul>
+        <div class="note tip"><b>Not a local VM:</b> the AWS Academy Learner Lab is cloud &mdash; a browser plus an SSH key, nothing in VirtualBox. The CloudWatch / Sentinel comparisons in Lab&nbsp;6 are conceptual, so nothing to install there either.</div>
+        <p>The Dell itself can stand in as the Lab&nbsp;4&ndash;5 <em>analyst workstation</em> for the Event-Viewer / <code class="inl">.evtx</code> and PowerShell work &mdash; it just can&rsquo;t receive the GNS3 SPAN mirror, so live capture stays on the Debian or Parrot VM. That saves one VM&rsquo;s worth of RAM.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section id="network">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">5</span>The network model</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <p>One host-only network: <code class="inl">vboxnet-cyb01</code> = <span class="mono-sm">10.10.10.0/24</span>, with DHCP <strong>off</strong> so addresses stay predictable.</p>
+        <div class="ipmap">
+          <span class="ip">10.10.10.1</span><span class="who">pfSense LAN (gateway)</span>
+          <span class="ip">10.10.10.20</span><span class="who">Windows target</span>
+          <span class="ip">10.10.10.30</span><span class="who">Debian sensor (Wazuh / Splunk / syslog target)</span>
+          <span class="ip">10.10.10.40</span><span class="who">Parrot analyst</span>
+        </div>
+        <ul>
+          <li>A <strong>second adapter</strong> on the Linux/Windows VMs = NAT, for package downloads only. Disable it (or switch it to host-only) during analysis to keep the lab isolated.</li>
+          <li>The <strong>SPAN / port-mirror</strong> is configured <em>inside</em> GNS3 &mdash; copy the LAN switch traffic to the sensor&rsquo;s port (Lab&nbsp;3, Phase&nbsp;1). The host can&rsquo;t receive that mirror, which is why capture lives on a VM.</li>
+        </ul>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section id="swaps">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">6</span>The three swaps &mdash; what changes</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+
+        <h3>pfSense in place of OPNsense</h3>
+        <p>Lab&nbsp;3 already blesses this &mdash; same FreeBSD firewall, same job, only two menus differ:</p>
+        <ul>
+          <li><strong>SNMP:</strong> <em>Services &rarr; SNMP</em> &mdash; community string <code class="inl">labdemo</code>, location, contact (same fields as OPNsense).</li>
+          <li><strong>Remote syslog:</strong> <em>Status &rarr; System Logs &rarr; Settings &rarr; Remote Logging</em>, pointed at <span class="mono-sm">10.10.10.30:514</span> over UDP (OPNsense put this under <em>System &rarr; Settings &rarr; Logging/Targets</em>).</li>
+        </ul>
+        <p>Students screenshot pfSense&rsquo;s own paths. Use the free Community Edition (CE), not pfSense Plus.</p>
+
+        <h3>Debian in place of Ubuntu</h3>
+        <p>Nothing in the labs is Ubuntu-locked. Three catches, all on the sensor box:</p>
+        <ol>
+          <li><code class="inl">snmp-mibs-downloader</code> lives in Debian&rsquo;s <strong>contrib/non-free</strong> &mdash; enable it (see Software per VM) or the Phase-2 Management Information Base (MIB) decode step fails. It&rsquo;s in multiverse on Ubuntu, hence the difference.</li>
+          <li>Wazuh 4.7 officially lists Debian 10/11/12, so <strong>use Debian 12 for that one VM</strong>. Debian 13 (trixie) is newer than the matrix and may trip the installer&rsquo;s OS check &mdash; that&rsquo;s exactly what <code class="inl">--ignore-check</code> is for (the packages are architecture-based, so they install fine underneath).</li>
+          <li>The Network Interface Card (NIC) is usually <code class="inl">enp0s3</code>, not <code class="inl">ens33</code> &mdash; your briefs already tell students to confirm with <code class="inl">ip link</code> and substitute.</li>
+        </ol>
+        <div class="note warn"><b>Keep VPCS as VPCS.</b> The Virtual PC Simulator is GNS3&rsquo;s few-megabyte built-in node, not Ubuntu. Drop a Debian VM in only where a node actually has to run tools; for throwaway ping-test nodes the saved RAM matters on this laptop.</div>
+
+        <h3>Parrot in place of Kali</h3>
+        <p>Lab&nbsp;1 already lists it (&ldquo;lighter Kali alternative&rdquo;). Parrot Security Edition ships the same Wireshark + Nmap toolset, it&rsquo;s Debian-based, there&rsquo;s a prebuilt VirtualBox image, and every Kali step in the build &mdash; Phase-5 ping / <code class="inl">nmap -sn</code>, SPAN capture, Wireshark &mdash; runs identically. It&rsquo;s also a touch lighter on the old processor.</p>
+
+        <div class="note tip"><b>Net effect:</b> the whole lab is now Debian-family except the firewall (FreeBSD, unavoidable for both options). Students juggle one package manager almost everywhere &mdash; one less thing to teach.</div>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section id="snapshots">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">7</span>Snapshot checkpoints (take in order)</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <p>Snapshots are your save points <em>and</em> your time machine. The Wazuh install is the one step most likely to bite &mdash; snapshot right before it. Tick each as you reach it.</p>
+        <ul class="chk" id="snaplist">
+          <li><input type="checkbox"><div><span class="snap">00-fresh-install</span> &mdash; <span class="desc">every VM, immediately after the OS install + guest additions, before any config (Day&nbsp;05, Phase&nbsp;6).</span></div></li>
+          <li><input type="checkbox"><div><span class="snap">01-networked</span> &mdash; <span class="desc">every VM, after the host-only network is wired and ping works across the lab (end of Day&nbsp;05).</span></div></li>
+          <li><input type="checkbox"><div><span class="snap">pre-wazuh</span> &mdash; <span class="desc">sensor only, after RAM is bumped to 8&nbsp;GB and <em>before</em> running <code class="inl">wazuh-install.sh</code>. The most fragile step &mdash; this is your one-click rollback.</span></div></li>
+          <li><input type="checkbox"><div><span class="snap">02-monitoring-stack</span> &mdash; <span class="desc">sensor + Windows target, after Wazuh + Splunk are up and the first alert has forwarded (end of Lab&nbsp;3). Roll back here to start Lab&nbsp;4.</span></div></li>
+          <li><input type="checkbox"><div><span class="snap">pre-attack</span> &mdash; <span class="desc">Windows target + sensor, right before the Lab&nbsp;5 live attack chain &mdash; lets you replay the exercise.</span></div></li>
+        </ul>
+        <div class="note warn"><b>Disk reminder:</b> dynamically-allocated disks plus snapshots can double your disk use &mdash; budget for it under Old-Dell tuning.</div>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section id="perf">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">8</span>Running it on the old Dell</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner">
+        <h3>RAM is fine</h3>
+        <p>Peak concurrent use is roughly 17&ndash;21&nbsp;GB (Lab&nbsp;3 with the full stack plus the topology), well inside 32&nbsp;GB once you reserve about 8&nbsp;GB for the Windows host.</p>
+
+        <h3>Disk is the real ceiling</h3>
+        <p>All VMs coexisting is roughly 250&ndash;300&nbsp;GB, and snapshots can double it. Use dynamically-allocated VDIs, keep at least 300&nbsp;GB free, or park the VMs on an external USB-3 SSD. One hard rule: put at least the <strong>Debian sensor on an SSD</strong> &mdash; OpenSearch on a spinning disk crawls badly enough to look broken.</p>
+
+        <h3>CPU is the thing to manage</h3>
+        <p>A quad-core (i5/i7-7x00 desktop or H-series) is comfortable; a dual-core U-series ultrabook chip will struggle with the SIEM stack &mdash; check which you have:</p>
+<pre><code>wmic cpu get name</code></pre>
+        <ul>
+          <li>Give the sensor <strong>2 virtual CPUs (vCPU) and the full 8&nbsp;GB</strong> &mdash; Wazuh&rsquo;s indexer dies on the install with less.</li>
+          <li>Install Splunk, run the one Wazuh&nbsp;&rarr;&nbsp;Splunk forwarding exercise, then <code class="inl">splunk stop</code> to reclaim CPU/RAM &mdash; Wazuh already embeds OpenSearch, so you don&rsquo;t need both indexers running afterward.</li>
+          <li>Don&rsquo;t fire up the SIEM, the GNS3 topology, and Parrot in the same minute &mdash; sequence the heavy moments.</li>
+        </ul>
+
+        <h3>Nested virtualization &mdash; leave it off</h3>
+        <p>The switch / VPCS / pfSense topology here doesn&rsquo;t need VirtualBox&rsquo;s <em>Nested VT-x/AMD-V</em> (pfSense runs as its own VM linked into GNS3, not nested), which spares the old processor the tax.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section id="legal">
+    <div class="card">
+      <button class="card-head"><span class="card-head-title"><span class="n">9</span>Legal, safety &amp; ownership</span><span class="chev">&#9662;</span></button>
+      <div class="card-body-wrap"><div class="card-body"><div class="card-inner legal">
+        <p><b>Authorisation.</b> Every action in this build is authorised only inside the isolated, instructor-controlled laboratory, on virtual machines you own. Outside it, scanning, sniffing, probing, or mapping a system you do not own or hold explicit written permission to test is a criminal offence under, among others: <b>Canada</b> &mdash; <a class="link" href="https://laws-lois.justice.gc.ca/eng/acts/c-46/" target="_blank" rel="noopener">Criminal Code</a> s.&nbsp;342.1 (Unauthorized use of computer); <b>United States</b> &mdash; Computer Fraud and Abuse Act, 18 U.S.C. &sect;&nbsp;1030; <b>European Union</b> &mdash; Directive 2013/40/EU on attacks against information systems; <b>Spain</b> &mdash; Ley Org&aacute;nica 10/1995 del C&oacute;digo Penal (Articles 197, 264). Ignorance of the law is not a defence.</p>
+        <p><b>Verify before you click.</b> Run every download URL and every file hash through the <a class="link" href="https://www.virustotal.com" target="_blank" rel="noopener">VirusTotal</a> scanner before opening or executing it &mdash; even on official vendor pages.</p>
+        <p><b>No affiliation.</b> Cyber.SoHo Educational Hub is an independent educational brand and the sole creator and owner of this material. No affiliation with, sponsorship by, or endorsement from any university, college, employer, software project, tool vendor, or standards body is named or implied; every third-party name appears nominatively, for instruction only.</p>
+        <p><b>Held harmless.</b> Cyber.SoHo Educational Hub, its author, and its instructors accept no liability for any damage, loss, downtime, data corruption, or legal, disciplinary, or financial consequence arising from the use, misuse, or misinterpretation of any tool, command, configuration, or recommendation in this document. If you are unsure whether an action is authorised, ask before performing it; if you are unsure whether a link is safe, scan it first.</p>
+      </div></div></div></div>
+    </div>
+  </section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="tag">Cyber.SoHo Educational Hub</span> &middot; From the Industry to the Classroom &mdash; Building the IT&rsquo;s Future, Today and Together!<br>
+    &copy; Cyber.SoHo Educational Hub, 2026 &mdash; All Rights Reserved.
+  </div>
+</footer>
+
+<div id="fab">
+  <span id="fab-label">Before you start</span>
+  <button id="fab-fold">Fold all</button>
+</div>
+
+<script>
+(function(){
+  // collapsible cards
+  document.querySelectorAll('.card-head').forEach(function(h){
+    h.addEventListener('click',function(){ h.parentElement.classList.toggle('collapsed'); });
+  });
+
+  // fold / unfold all
+  var allCollapsed=false, foldBtn=document.getElementById('fab-fold');
+  foldBtn.addEventListener('click',function(){
+    allCollapsed=!allCollapsed;
+    document.querySelectorAll('.card').forEach(function(c){ c.classList.toggle('collapsed',allCollapsed); });
+    foldBtn.textContent=allCollapsed?'Unfold all':'Fold all';
+  });
+
+  // copy buttons on code blocks
+  document.querySelectorAll('pre').forEach(function(pre){
+    var b=document.createElement('button');
+    b.className='copy'; b.type='button'; b.textContent='Copy';
+    b.addEventListener('click',function(){
+      var code=pre.querySelector('code');
+      var text=code?code.innerText:pre.innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        b.textContent='Copied'; setTimeout(function(){ b.textContent='Copy'; },1200);
+      }).catch(function(){ b.textContent='—'; setTimeout(function(){ b.textContent='Copy'; },1200); });
+    });
+    pre.appendChild(b);
+  });
+
+  // checklist done-state
+  document.querySelectorAll('#snaplist li').forEach(function(li){
+    var cb=li.querySelector('input');
+    function sync(){ li.classList.toggle('done',cb.checked); }
+    li.addEventListener('click',function(e){ if(e.target!==cb){ cb.checked=!cb.checked; sync(); } });
+    cb.addEventListener('change',sync);
+  });
+
+  // scroll-spy: active nav pill + FAB label
+  var fabLabel=document.getElementById('fab-label');
+  var links={};
+  document.querySelectorAll('nav.bar a').forEach(function(a){ links[a.getAttribute('href').slice(1)]=a; });
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        Object.keys(links).forEach(function(k){ links[k].classList.remove('active'); });
+        var a=links[e.target.id]; if(a) a.classList.add('active');
+        var t=e.target.querySelector('.card-head-title');
+        if(t){ fabLabel.textContent=t.textContent.replace(/^\s*\d+\s*/,''); }
+      }
+    });
+  },{rootMargin:'-45% 0px -50% 0px',threshold:0});
+  document.querySelectorAll('section[id]').forEach(function(s){ io.observe(s); });
+})();
+</script>
+</body>
+</html>
